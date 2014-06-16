@@ -833,6 +833,19 @@ code2 {
   border-radius: 1px;
 }
 
+code4 {
+  padding: 2px 4px;
+  font-size: 90%;
+  font-family: "Monaco", Menlo, Consolas;
+  font-weight: 400;
+/*   color: #35b937; */
+/*   color: #c09853; */
+  color: #73a839;
+  white-space: nowrap;
+  background-color: transparent;
+  border-radius: 1px;
+}
+
 code3 {
   padding: 2px 4px;
   font-size: 90%;

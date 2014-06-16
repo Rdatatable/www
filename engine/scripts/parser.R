@@ -219,6 +219,7 @@ parser <- function(in_file, out_file) {
     dt = dt[, list(lines = paste(lines, collapse="")), by=id]
     para(dt)
     dt[grepl("^(?<![/]{2})[#]", lines, perl=TRUE), lines := paste(lines, "\n", sep="")]
+    dt[grepl("[/]{2}$", lines), lines := paste(gsub("[/]{2}$", "", lines), "\n", sep="")]
     dt[, lines := gsub("[/]{2}([ ]*[.%!#])", "\\1", lines)]
     writeLines(dt$lines, out_file, sep="\n")
 }

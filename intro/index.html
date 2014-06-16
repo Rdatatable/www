@@ -38,7 +38,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
 <ul class="nav navbar-nav">
 <li>
-<a href="../../"><span class="glyphicon glyphicon-home"></span> data.table</a>
+<a href="../"><span class="glyphicon glyphicon-home"></span> data.table</a>
 </li>
 </ul>
 <ul class="nav navbar-nav navbar-left">
@@ -46,10 +46,10 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-pencil"></span> Get started <span class="caret"></span></a>
 <ul class="dropdown-menu" aria-labelledby="docs">
 <li>
-<a href="./">data.table project</a>
+<a href="../about/">data.table project</a>
 </li>
 <li>
-<a href="../intro/">Quick Introduction</a>
+<a href="./">Quick Introduction</a>
 </li>
 <li>
 <a href="../learn-by-example/">Learn with example</a>
@@ -176,7 +176,7 @@ Some users regularly work with 20 or more tables in memory, rather like a databa
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">sapply</span>(DT, class)
 <span class="co">#           x           v </span>
 <span class="co"># &quot;character&quot;   &quot;numeric&quot;</span></code></pre>
-<div id="qintro-box-01" class="bs-callout bs-callout-info">
+<div class='bs-callout bs-callout-info' id='qintro-box-01'>
 <p > 
 <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span> </span> As from <code>v1.8.0</code>, <code>data.table</code> no longer converts <code2>character</code2> to <code2>factor</code2>.
 </p>
@@ -187,7 +187,7 @@ You may’ve noticed the empty column <code2>KEY</code2> in the result of <code2
 </div>
 <!-- Introduction -->
 <!-- Grouping -->
-<h3>Fast grouping</h3>
+<h3 id="fast-grouping" class="page-header">Fast grouping</h3>
 <p > 
 The second argument to <code2>[</code2> is <code2>j</code2>, which may consist of one or more expressions whose arguments are (unquoted) column names, as if the column names were variables.
 </p>
@@ -240,30 +240,15 @@ sss =<span class="st"> </span><span class="kw">system.time</span>(ss &lt;-<span 
 <blockquote>
 head(tt) <span class="text-muted"> A B C D E F 192155.8 192406.2 192393.1 192055.6 192103.3 192444.5</span> head(ss) <span class="text-muted"> x V1 1: A 192155.8 2: B 192406.2 3: C 192393.1 4: D 192055.6 5: E 192103.3 6: F 192444.5</span> identical(as.vector(tt), ss<span class="math">$V1) &lt;span class=&quot;text-muted&quot;&gt;[1] TRUE&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;                         &lt;p&gt;At 0.757 sec, this was &lt;strong&gt;33 times faster&lt;/strong&gt; than 25.057 sec, and produced precisely the same result. Next, let's group by two columns:&lt;/p&gt;                         &lt;pre&gt;&lt;code&gt;&gt; ttt = system.time(tt &lt;- tapply(DT$</span>v, list(DT<span class="math"><em>x</em>, <em>D</em><em>T</em></span>y), sum)); ttt <span class="text-muted"> user system elapsed 26.225 2.488 28.795</span> sss = system.time(ss &lt;- DT[, sum(v), by = “x,y”]); sss <span class="text-muted"> user system elapsed 0.772 0.212 0.985</span> tt[1:5,1:5] <span class="text-muted"> a b c d e A 7399.718 7387.322 7396.215 7340.169 7395.343 B 7382.446 7385.050 7394.142 7422.724 7449.657 C 7339.325 7417.330 7382.845 7334.227 7367.312 D 7404.550 7350.818 7361.045 7438.276 7337.818 E 7392.724 7374.611 7364.660 7401.654 7415.766</span> head(ss) <span class="text-muted"> x y V1 1: A a 7399.718 2: A b 7387.322 3: A c 7396.215 4: A d 7340.169 5: A e 7395.343 6: A f 7444.851</span> identical(as.vector(t(tt)), ss$V1) <span class="text-muted">[1] TRUE</span></code>
 </pre>
-                        <p>
-This was <strong>29 times faster</strong>, and the syntax is a little simpler and easier to read.
-</p>
-<!--                    <div class="bs-callout bs-callout-info" id="cast_box"> -->
-                        <p>
-The following features are mentioned only briefly here; further examples are in <span class="text-info">?data.table</span> and the <a href="../faq/#beginner">FAQ vignette</a>.
-</p>
-                        <ul>
-                            <li>
-To return several expressions, pass a <code>list()</code> to <code>j</code>.
-</li>
-                            <li>
-Each item of the list is recycled to match the length of the longest item.
-</li>
-                            <li>
-You can pass a <code>list()</code> of expressions of column names to by e.g. <code>DT[, sum(v), by = list(month(dateCol), region)]</code> where calling <code>month()</code> on <code>dateCol</code> is what we mean by expressions of column names.
-</li>
-                            <li>
-Any <code>R</code> functions from any package can be used in <code>j</code> and <code>by</code>.
-</li>
-                        </ul>
-
-</blockquote>
-<!--                        </div> -->
+<!-- <p>This was <strong>29 times faster</strong>, and the syntax is a little simpler and easier to read.</p>
+<p>The following features are mentioned only briefly here; further examples are in <span class="text-info">?data.table</span> and the <a href="../faq/#beginner">FAQ vignette</a>.</p>
+<ul>
+<li>To return several expressions, pass a <code>list()</code> to <code>j</code>.</li>
+<li>Each item of the list is recycled to match the length of the longest item.</li>
+<li>You can pass a <code>list()</code> of expressions of column names to by e.g.
+<code>DT[, sum(v), by = list(month(dateCol), region)]</code> where calling <code>month()</code> on <code>dateCol</code> is what we mean by expressions of column names.</li>
+<li>Any <code>R</code> functions from any package can be used in <code>j</code> and <code>by</code>.</li>
+</ul> -->                                
 </div>
 </div>
 </div>
@@ -276,6 +261,7 @@ allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"><
 <iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=fork&count=true"
 allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
 <div class="footer-links">
+<ul class="footer-links muted">
 <p>
 Designed using <a href="http://getbootstrap.com">Bootstrap</a> and styled with <a href="http://bootswatch.com/">Bootswatch</a> using <a href="http://bootswatch.com/cerulean">Cerulean</a> theme.
 </p>
@@ -319,6 +305,7 @@ Version 1.9.2
 <a href="http://stackoverflow.com/questions/tagged/r+data.table">Stackoverflow tag</a>
 </li>
 <span class="pull-right"><a href="#top">Back to top</a></span>
+</ul>
 </footer>
 <script src="https://code.jquery.com/jquery.js"></script>
 <script src="../js/waypoints.js"></script>
@@ -339,5 +326,7 @@ var sc_security="518c93ca";
 <!-- End of StatCounter Code -->
 </body>
 </html>
+
+</blockquote>
 </body>
 </html>
