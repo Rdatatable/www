@@ -39,157 +39,125 @@
 </nav>
 </div>
 </header>
-
 <!-- learn-by-example/index.html -->
 <!-- ACTUAL CONTENT STARTS HERE -->
-.div{.container .bs-docs-container}
-.div{.row}
-.div{.col-md-9}
-
-This section for the most part contains selected topics from <code4>example(data.table)</code4> to illustrate the most common data manipulation operations using `data.table`. .p{.leadtop}
-
+<div class='container bs-docs-container'>
+<div class='row'>
+<div class='col-md-9'>
+<p class='leadtop'> This section for the most part contains selected topics from <code4>example(data.table)</code4> to illustrate the most common data manipulation operations using `data.table`. </p>
 # Basics {#basics .page-header}
 
-Let's start by looking at different ways of creating a `data.table`. .p{.lead}
-
-.div{.bs-docs-section}
-
+<p class='lead'> Let's start by looking at different ways of creating a `data.table`. </p>
+<div class='bs-docs-section'>
 ### Creating a data.table {#creating-a-data-table}
 
-Some ways of accomplishing this have been already mentioned in the [Quick introduction guide](). But for completeness, we'll cover it again. .p{}
-
-.ul{.nav .nav-tabs style=margin-bottom:15px}
-.li{.active} %>% <a href="#dt_create1" data-toggle="tab"><code4>data.table()</code4></a> %>% .li
-.li{} %>% <a href="#dt_create2" data-toggle="tab"><code4>as.data.table()</code4></a> %>% .li
-.li{} %>% <a href="#dt_create3" data-toggle="tab"><code4>setDT()</code4></a> %>% .li
-.ul
-
-.div{#creating-a-data-table-navtabs .tab-content}
-
-.div{.tab-pane .fade .active .in #dt_create1}
-We can create a `data.table` using the <code4>data.table()</code4> function: .p{}
-
+<p > Some ways of accomplishing this have been already mentioned in the [Quick introduction guide](). But for completeness, we'll cover it again. </p>
+<ul class='nav nav-tabs' style='margin-bottom:15px'>
+<li class='active'> <a href="#dt_create1" data-toggle="tab"><code4>data.table()</code4></a></li>
+<li  > <a href="#dt_create2" data-toggle="tab"><code4>as.data.table()</code4></a></li>
+<li  > <a href="#dt_create3" data-toggle="tab"><code4>setDT()</code4></a></li>
+</ul>
+<div id='creating-a-data-table-navtabs' class='tab-content'>
+<div class='tab-pane fade active in' id='dt_create1'>
+<p > We can create a `data.table` using the <code4>data.table()</code4> function: </p>
 ```{.r}
-//# creation of a data.frame
+# creation of a data.frame
 DF <- data.frame(x=1:2, y=letters[1:2], stringsAsFactors=FALSE)
 DF
-//#   x y
-//# 1 1 a
-//# 2 2 b//
-//# creation of a data.table
+#   x y
+# 1 1 a
+# 2 2 b
+
+# creation of a data.table
 DT <- data.table(x=1:2, y=letters[1:2])
 DT
-//#    x y
-//# 1: 1 a
-//# 2: 2 b
+#    x y
+# 1: 1 a
+# 2: 2 b
 ```
-
-.div{#strings-as-factors .bs-callout .bs-callout-info}
-Note that we dint have to use `stringsAsFactors=FALSE` during the creation of `data.table`. This is because, since **v1.8.0** %>% !!{.text-danger} %>%, `data.table` **does not** convert `character` to `factor`, by default. .p{}
-.div
-.div
-
-.div{.tab-pane .fade .in #dt_create2}
-
+<div id='strings-as-factors' class='bs-callout bs-callout-info'>
+<p > Note that we dint have to use `stringsAsFactors=FALSE` during the creation of `data.table`. This is because, since **v1.8.0**<span class='text-danger'></span>, `data.table` **does not** convert `character` to `factor`, by default. </p>
+</div>
+</div>
+<div class='tab-pane fade in' id='dt_create2'>
 Similar to <code4>as.data.frame()</code4>, <code4>as.data.table()</code4> methods also exist to convert other objects to `data.table`.
-
 ```{.r}
 methods(as.data.table)
-//#  [1] as.data.table.character*  as.data.table.data.frame* as.data.table.data.table* as.data.table.Date*      
-//#  [5] as.data.table.factor*     as.data.table.integer*    as.data.table.list*       as.data.table.logical*   
-//#  [9] as.data.table.matrix*     as.data.table.numeric*    as.data.table.ordered*    as.data.table.table*     
-//#
-//#    Non-visible functions are asterisked//
-//# convert the data.frame DF to data.table
+#  [1] as.data.table.character*  as.data.table.data.frame* as.data.table.data.table* as.data.table.Date*      
+#  [5] as.data.table.factor*     as.data.table.integer*    as.data.table.list*       as.data.table.logical*   
+#  [9] as.data.table.matrix*     as.data.table.numeric*    as.data.table.ordered*    as.data.table.table*     
+#
+#    Non-visible functions are asterisked
+
+# convert the data.frame DF to data.table
 DF_to_DT <- as.data.table(DF)
 DF_to_DT
-//#    x y
-//# 1: 1 a
-//# 2: 2 b
+#    x y
+# 1: 1 a
+# 2: 2 b
 ```
-It's better to use <code4>as.data.table()</code4> wherever possible because it has lesser overhead compared to <code4>data.table()</code4> and is therefore likely to be faster. .p{}
-.div
-
-.div{.tab-pane .fade .in #dt_create3}
-
-From %>% **v1.9.0** !!{.text-danger} %>%, following [a post on SO](http://stackoverflow.com/questions/20345022/convert-a-data-frame-to-a-data-table-without-copy), <code4>setDT()</code4> was implemented which accepts a `list`, `data.frame`  or `data.table` and converts it into a `data.table` **by reference** - no copy is being made at all. .p{}
-
+<p > It's better to use <code4>as.data.table()</code4> wherever possible because it has lesser overhead compared to <code4>data.table()</code4> and is therefore likely to be faster. </p>
+</div>
+<div class='tab-pane fade in' id='dt_create3'>
+<p > From<span class='text-danger'> **v1.9.0**</span>, following [a post on SO](http://stackoverflow.com/questions/20345022/convert-a-data-frame-to-a-data-table-without-copy), <code4>setDT()</code4> was implemented which accepts a `list`, `data.frame`  or `data.table` and converts it into a `data.table` **by reference** - no copy is being made at all. </p>
 ```{.r}
 dat <- data.frame(x=1:2, y=3:4)
-setDT(dat) //# now a data.atable
+setDT(dat) # now a data.atable
 dat
-//#    x y
-//# 1: 1 3
-//# 2: 2 4
+#    x y
+# 1: 1 3
+# 2: 2 4
 ```
-This conversion, since does no copying, will be instant - especially handy when working with *very large* objects. .p{}
-.div
-
-.div
-
----//
+<p > This conversion, since does no copying, will be instant - especially handy when working with *very large* objects. </p>
+</div>
+</div>
+---
 
 ### Subset on a data.table {#subset-data-table}
 
 #### Subset  rows {#subset-rows}
 
-Before we discuss subset on `data.tables`, let's consider `data.frames` briefly. Suppose one wants to subset rows satisfying a condition, say, column `x > 1` on a `data.frame`, one way to perform this operation would be to use the <code4>\$</code4> operator, ex: `DF[DF$x > 1L, ]`. We could also accomplish this task using the base function <code4>with()</code4>, as shown below. .p{}
-
+<p > Before we discuss subset on `data.tables`, let's consider `data.frames` briefly. Suppose one wants to subset rows satisfying a condition, say, column `x > 1` on a `data.frame`, one way to perform this operation would be to use the <code4>\$</code4> operator, ex: `DF[DF$x > 1L, ]`. We could also accomplish this task using the base function <code4>with()</code4>, as shown below. </p>
 ```{.r}
 DF <- data.frame(x=rep(1:2, 3L), y=10:15)
-//# using with()
+# using with()
 DF[with(DF, x > 1L), ]
-//#   x  y
-//# 2 2 11
-//# 4 2 13
-//# 6 2 15
+#   x  y
+# 2 2 11
+# 4 2 13
+# 6 2 15
 ```
-`data.tables` *by default* does this for you, for convenience. In other words, `data.table`'s <code4>i</code4> *sees* it's columns as variables. This enables us to subset as: .p{}
-
+<p > `data.tables` *by default* does this for you, for convenience. In other words, `data.table`'s <code4>i</code4> *sees* it's columns as variables. This enables us to subset as: </p>
 ```{.r}
 DT <- data.table(x=rep(1:2, 3L), y=10:15)
-DT[x > 1L] //# Note that ',' is optional here
-//#    x  y
-//# 1: 2 11
-//# 2: 2 13
-//# 3: 2 15
+DT[x > 1L] # Note that ',' is optional here
+#    x  y
+# 1: 2 11
+# 2: 2 13
+# 3: 2 15
 ```
 It will work using the <code4>\$</code4> operator as well, but it's not necessary and not the idiomatic `data.table` way. 
-
-.div{#strings-as-factors .bs-callout .bs-callout-info}
-**Note:** For examples on *fast* subset based on data.table's **binary search**, go to [section #](). .p{}
-.div
-
+<div id='strings-as-factors' class='bs-callout bs-callout-info'>
+<p > **Note:** For examples on *fast* subset based on data.table's **binary search**, go to [section #](). </p>
+</div>
 #### Subset  columns {#subset-cols}
 
-In the [previous section](#subset-rows), we saw that `data.table`'s <code4>i</code4> extends `data.frame`'s functionality for convenient subset, by seeing column names as variables within the scope of DT. .p{}
-
-Similarly, `data.table` also extends the functionality of <code4>j</code4>. In a `data.table`, <code4>j</code4>, by default, is <code2>an expression</code2> that is evaluated within the scope of DT. This is explained quite clearly in the [Beginner's FAQ: 1.1 and 1.2](). .p{}
-
-We'll see what this means and how this feature extends functionality in the [aggregation section](). In this section, let's see what this functionality means with respect to subset on columns. .p{}
-
+<p > In the [previous section](#subset-rows), we saw that `data.table`'s <code4>i</code4> extends `data.frame`'s functionality for convenient subset, by seeing column names as variables within the scope of DT. </p>
+<p > Similarly, `data.table` also extends the functionality of <code4>j</code4>. In a `data.table`, <code4>j</code4>, by default, is <code2>an expression</code2> that is evaluated within the scope of DT. This is explained quite clearly in the [Beginner's FAQ: 1.1 and 1.2](). </p>
+<p > We'll see what this means and how this feature extends functionality in the [aggregation section](). In this section, let's see what this functionality means with respect to subset on columns. </p>
 **Column subset the data.table way:**
-
-.div
-
-.div 
+</div>
+</div>
 <!-- col-md-9 -->
-
-.div
-.div
-
+</div>
+</div>
 <!-- FOOTER - YOU WOULDNT HAVE TO MODIFY THIS PART -->
 <footer class="bs-footer" role="contentinfo">
-
 <div class="container">
-
 <iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=watch&count=true"
 allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
-
 <iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=fork&count=true"
 allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
-
-
 <div class="footer-links">
 <ul class="footer-links muted">
 <p>Designed using <a href="http://getbootstrap.com">Bootstrap</a> and styled with <a href="http://bootswatch.com/">Bootswatch</a> using <a href="http://bootswatch.com/cerulean">Cerulean</a> theme.</p>
@@ -209,19 +177,16 @@ allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></
 <span class="pull-right"><a href="#top">Back to top</a></span>
 </ul>
 </footer>
-
 <script src="https://code.jquery.com/jquery.js"></script>
 <script src="../js/waypoints.js"></script>
 <script src="../js/bootstrap.min.js"></script>
 <script src="../js/docs.min.js"></script>
-
 <!-- Start of StatCounter Code -->
 <script type="text/javascript">
 var sc_project=6237851;
 var sc_invisible=1;
 var sc_security="518c93ca";
 </script>
-
 <script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
 <noscript>
 <div class="statcounter">

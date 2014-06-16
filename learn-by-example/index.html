@@ -91,7 +91,7 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <div class='row'>
 <div class='col-md-9'>
 <p class='leadtop'> 
-This section is basically a verbose version of selected topics from <code4>example(data.table)</code4> to illustrate the most common data manipulation operations using <code>data.table</code>.
+This section for the most part contains selected topics from <code4>example(data.table)</code4> to illustrate the most common data manipulation operations using <code>data.table</code>.
 </p>
 <h1 id="basics" class="page-header">Basics</h1>
 <p class='lead'> 
@@ -100,8 +100,21 @@ Let’s start by looking at different ways of creating a <code>data.table</code>
 <div class='bs-docs-section'>
 <h3 id="creating-a-data-table">Creating a data.table</h3>
 <p > 
-This is already mentioned in the <a href="">Quick introduction guide</a>. But for completeness, we’ll cover it again.
+Some ways of accomplishing this have been already mentioned in the <a href="">Quick introduction guide</a>. But for completeness, we’ll cover it again.
 </p>
+<ul class='nav nav-tabs' style='margin-bottom:15px'>
+<li class='active'> 
+<a href="#dt_create1" data-toggle="tab"><code4>data.table()</code4></a>
+</li>
+<li  > 
+<a href="#dt_create2" data-toggle="tab"><code4>as.data.table()</code4></a>
+</li>
+<li  > 
+<a href="#dt_create3" data-toggle="tab"><code4>setDT()</code4></a>
+</li>
+</ul>
+<div id='creating-a-data-table-navtabs' class='tab-content'>
+<div class='tab-pane fade active in' id='dt_create1'>
 <p > 
 We can create a <code>data.table</code> using the <code4>data.table()</code4> function:
 </p>
@@ -123,7 +136,8 @@ DT
 Note that we dint have to use <code>stringsAsFactors=FALSE</code> during the creation of <code>data.table</code>. This is because, since <strong>v1.8.0</strong><span class="text-danger"></span>, <code>data.table</code> <strong>does not</strong> convert <code>character</code> to <code>factor</code>, by default.
 </p>
 </div>
-<h4>Using as.data.table</h4>
+</div>
+<div class='tab-pane fade in' id='dt_create2'>
 <p>Similar to <code4>as.data.frame()</code4>, <code4>as.data.table()</code4> methods also exist to convert other objects to <code>data.table</code>.</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">methods</span>(as.data.table)
 <span class="co">#  [1] as.data.table.character*  as.data.table.data.frame* as.data.table.data.table* as.data.table.Date*      </span>
@@ -141,7 +155,8 @@ DF_to_DT
 <p > 
 It’s better to use <code4>as.data.table()</code4> wherever possible because it has lesser overhead compared to <code4>data.table()</code4> and is therefore likely to be faster.
 </p>
-<h4>Using setDT</h4>
+</div>
+<div class='tab-pane fade in' id='dt_create3'>
 <p > 
 From<span class="text-danger"> <strong>v1.9.0</strong></span>, following <a href="http://stackoverflow.com/questions/20345022/convert-a-data-frame-to-a-data-table-without-copy">a post on SO</a>, <code4>setDT()</code4> was implemented which accepts a <code>list</code>, <code>data.frame</code> or <code>data.table</code> and converts it into a <code>data.table</code> <strong>by reference</strong> - no copy is being made at all.
 </p>
@@ -154,6 +169,8 @@ dat
 <p > 
 This conversion, since does no copying, will be instant - especially handy when working with <em>very large</em> objects.
 </p>
+</div>
+</div>
 <hr />
 <h3>Subset on a data.table</h3>
 <h4>Subset rows</h4>
