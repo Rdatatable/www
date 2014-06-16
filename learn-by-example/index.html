@@ -93,24 +93,29 @@ code > span.er { color: #ff0000; font-weight: bold; }
 <p class='leadtop'> 
 This section for the most part contains selected topics from <code4>example(data.table)</code4> to illustrate the most common data manipulation operations using <code>data.table</code>.
 </p>
+<div id='prior-reading' class='bs-callout bs-callout-warning'>
+<p > 
+This section assumes (and to some extent requires) that you have already read through the <a href="">quick introduction guide</a> and the <a href="">Beginner’s FAQ</a> section.
+</p>
+</div>
 <h1 id="basics" class="page-header">Basics</h1>
 <p class='lead'> 
 Let’s start by looking at different ways of creating a <code>data.table</code>.
 </p>
 <div class='bs-docs-section'>
-<h3 id="creating-a-data-table">Creating a data.table</h3>
+<h3 id="creation">Creation</h3>
 <p > 
 Some ways of accomplishing this have been already mentioned in the <a href="">Quick introduction guide</a>. But for completeness, we’ll cover it again.
 </p>
 <ul class='nav nav-tabs' style='margin-bottom:15px'>
 <li class='active'> 
-<a href="#dt_create1" data-toggle="tab"><code4>data.table()</code4></a>
+<a href="#dt_create1" data-toggle="tab"><code2>data.table()</code2></a>
 </li>
 <li  > 
-<a href="#dt_create2" data-toggle="tab"><code4>as.data.table()</code4></a>
+<a href="#dt_create2" data-toggle="tab"><code2>as.data.table()</code2></a>
 </li>
 <li  > 
-<a href="#dt_create3" data-toggle="tab"><code4>setDT()</code4></a>
+<a href="#dt_create3" data-toggle="tab"><code2>setDT()</code2></a>
 </li>
 </ul>
 <div id='creating-a-data-table-navtabs' class='tab-content'>
@@ -133,12 +138,14 @@ DT
 <span class="co"># 2: 2 b</span></code></pre>
 <div id="strings-as-factors" class="bs-callout bs-callout-info">
 <p > 
-Note that we dint have to use <code>stringsAsFactors=FALSE</code> during the creation of <code>data.table</code>. This is because, since <strong>v1.8.0</strong><span class="text-danger"></span>, <code>data.table</code> <strong>does not</strong> convert <code>character</code> to <code>factor</code>, by default.
+<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span> </span> Note that we dint have to use <code>stringsAsFactors=FALSE</code> during the creation of <code>data.table</code>. This is because, since <strong>v1.8.0</strong><span class="text-danger"></span>, <code>data.table</code> <strong>does not</strong> convert <code>character</code> to <code>factor</code>, by default.
 </p>
 </div>
 </div>
-<div class='tab-pane fade in' id='dt_create2'>
-<p>Similar to <code4>as.data.frame()</code4>, <code4>as.data.table()</code4> methods also exist to convert other objects to <code>data.table</code>.</p>
+<div class='tab-pane fade' id='dt_create2'>
+<p > 
+Similar to <code4>as.data.frame()</code4>, <code4>as.data.table()</code4> methods also exist to convert other objects to <code>data.table</code>.
+</p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="kw">methods</span>(as.data.table)
 <span class="co">#  [1] as.data.table.character*  as.data.table.data.frame* as.data.table.data.table* as.data.table.Date*      </span>
 <span class="co">#  [5] as.data.table.factor*     as.data.table.integer*    as.data.table.list*       as.data.table.logical*   </span>
@@ -147,8 +154,9 @@ Note that we dint have to use <code>stringsAsFactors=FALSE</code> during the cre
 <span class="co">#    Non-visible functions are asterisked</span>
 
 <span class="co"># convert the data.frame DF to data.table</span>
-DF_to_DT &lt;-<span class="st"> </span><span class="kw">as.data.table</span>(DF)
-DF_to_DT
+DF &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">x=</span><span class="dv">1</span>:<span class="dv">2</span>, <span class="dt">y=</span>letters[<span class="dv">1</span>:<span class="dv">2</span>], <span class="dt">stringsAsFactors=</span><span class="ot">FALSE</span>)
+DT &lt;-<span class="st"> </span><span class="kw">as.data.table</span>(DF)
+DT
 <span class="co">#    x y</span>
 <span class="co"># 1: 1 a</span>
 <span class="co"># 2: 2 b</span></code></pre>
@@ -156,7 +164,7 @@ DF_to_DT
 It’s better to use <code4>as.data.table()</code4> wherever possible because it has lesser overhead compared to <code4>data.table()</code4> and is therefore likely to be faster.
 </p>
 </div>
-<div class='tab-pane fade in' id='dt_create3'>
+<div class='tab-pane fade' id='dt_create3'>
 <p > 
 From<span class="text-danger"> <strong>v1.9.0</strong></span>, following <a href="http://stackoverflow.com/questions/20345022/convert-a-data-frame-to-a-data-table-without-copy">a post on SO</a>, <code4>setDT()</code4> was implemented which accepts a <code>list</code>, <code>data.frame</code> or <code>data.table</code> and converts it into a <code>data.table</code> <strong>by reference</strong> - no copy is being made at all.
 </p>
@@ -171,48 +179,97 @@ This conversion, since does no copying, will be instant - especially handy when 
 </p>
 </div>
 </div>
-<hr />
-<h3>Subset on a data.table</h3>
-<h4>Subset rows</h4>
+</div>
+<div class='bs-docs-section'>
+<!-- something about the previous section removes the id info in pandoc.. maybe a bug? -->
+<h3 id="subset-rows">
+Subset on rows
+</h3> 
 <p > 
-Before we discuss subset on <code>data.tables</code>, let’s consider <code>data.frames</code> briefly. Suppose one wants to subset rows satisfying a condition, say, column <code>x &gt; 1</code> on a <code>data.frame</code>, one way to perform this operation would be to use the <code4>$</code4> operator, ex: <code>DF[DF$x &gt; 1L, ]</code>. We could also accomplish this task using the base function <code4>with()</code4>, as shown below.
+<code>data.table</code> syntax, in its general form, can be summarised as: <code4>DT[i, j, by]</code4>. This is where most of the magic happens. In this section - row subset, we’ll be looking at <code4>i</code4>.
 </p>
-<pre class="sourceCode r"><code class="sourceCode r">DF &lt;-<span class="st"> </span><span class="kw">data.frame</span>(<span class="dt">x=</span><span class="kw">rep</span>(<span class="dv">1</span>:<span class="dv">2</span>, 3L), <span class="dt">y=</span><span class="dv">10</span>:<span class="dv">15</span>)
-<span class="co"># using with()</span>
-DF[<span class="kw">with</span>(DF, x &gt;<span class="st"> </span>1L), ]
-<span class="co">#   x  y</span>
-<span class="co"># 2 2 11</span>
-<span class="co"># 4 2 13</span>
-<span class="co"># 6 2 15</span></code></pre>
 <p > 
-<code>data.tables</code> <em>by default</em> does this for you, for convenience. In other words, <code>data.table</code>’s <code4>i</code4> <em>sees</em> it’s columns as variables. This enables us to subset as:
+<code4>i</code4> can be <code>integer</code>, <code>logical</code>, <code>character</code> vector, <code>expression</code> (usually of column names), a <code>list</code> or another <code>data.table</code>. We’ll consider each one of these cases with examples.
 </p>
+<ul class='nav nav-tabs' style='margin-bottom:15px'>
+<li class='active'> 
+<a href="#subset-integer" data-toggle="tab">integer</a>
+</li>
+<li  > 
+<a href="#subset-logical" data-toggle="tab">logical</a>
+</li>
+<li  > 
+<a href="#subset-character" data-toggle="tab">character</a>
+</li>
+<li  > 
+<a href="#subset-expression" data-toggle="tab">expression</a>
+</li>
+<li  > 
+<a href="#subset-list" data-toggle="tab">list</a>
+</li>
+<li  > 
+<a href="#subset-data-table" data-toggle="tab">Another data.table</a>
+</li>
+</ul>
+<div id='creating-a-data-table-navtabs' class='tab-content'>
+<div class='tab-pane fade active in' id='subset-integer'>
+<p>This is perhaps the simplest case. The functionality is identical to that of a <code>data.frame</code>.</p>
 <pre class="sourceCode r"><code class="sourceCode r">DT &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">x=</span><span class="kw">rep</span>(<span class="dv">1</span>:<span class="dv">2</span>, 3L), <span class="dt">y=</span><span class="dv">10</span>:<span class="dv">15</span>)
-DT[x &gt;<span class="st"> </span>1L] <span class="co"># Note that &#39;,&#39; is optional here</span>
+DT[<span class="dv">1</span>:<span class="dv">2</span>, ]
+<span class="co">#    x  y</span>
+<span class="co"># 1: 1 10</span>
+<span class="co"># 2: 2 11</span></code></pre>
+<p > 
+The <code>,</code> is optinal here. <code>DT[1:2]</code> would work just fine.
+</p>
+</div>
+<div class='tab-pane fade' id='subset-logical'>
+<h4>Expression that evaluates to a logical vector:</h4>
+<p>It is often the case that we require to subset rows that satisfy a particular condition. We can accomplish this as follows:</p>
+<pre class="sourceCode r"><code class="sourceCode r">DT &lt;-<span class="st"> </span><span class="kw">data.table</span>(<span class="dt">x=</span><span class="kw">rep</span>(<span class="dv">1</span>:<span class="dv">2</span>, 3L), <span class="dt">y=</span><span class="dv">10</span>:<span class="dv">15</span>)
+DT[x &gt;<span class="st"> </span>1L]
 <span class="co">#    x  y</span>
 <span class="co"># 1: 2 11</span>
 <span class="co"># 2: 2 13</span>
 <span class="co"># 3: 2 15</span></code></pre>
-It will work using the <code4>$</code4> operator as well, but it’s not necessary and not the idiomatic <code>data.table</code> way.
-<div id="strings-as-factors" class="bs-callout bs-callout-info">
 <p > 
-<strong>Note:</strong> For examples on <em>fast</em> subset based on data.table’s <strong>binary search</strong>, go to <a href="">section #</a>.
+Note that we did not have use the <code4>$</code4> symbol, as we used to do in <code>data.frames</code>: <code>DF[DF$x &gt; 1L, ]</code>. You should already be familiar from <a href="">Beginner’s FAQ #</a> that <code>data.table</code>’s <code4>i</code4> sees column names as variables. This allows for a convenient and clutter-free syntax.
+</p>
+<p > 
+This functionality is similar to base’s <code4>with()</code4> based subset on a <code>data.frame</code>: <code>DF[with(DF, x &gt; 1L), ]</code>, except that <code>data.table</code> simplifies this one step further removing the requirement for wrapping with <code4>with()</code4>.
 </p>
 </div>
-<h4>Subset columns</h4>
-<p > 
-In the <a href="#subset-rows">previous section</a>, we saw that <code>data.table</code>’s <code4>i</code4> extends <code>data.frame</code>’s functionality for convenient subset, by seeing column names as variables within the scope of DT.
-</p>
-<p > 
-Similarly, <code>data.table</code> also extends the functionality of <code4>j</code4>. In a <code>data.table</code>, <code4>j</code4>, by default, is <code2>an expression</code2> that is evaluated within the scope of DT. This is explained quite clearly in the <a href="">Beginner’s FAQ: 1.1 and 1.2</a>.
-</p>
-<p > 
-We’ll see what this means and how this feature extends functionality in the <a href="">aggregation section</a>. In this section, let’s see what this functionality means with respect to subset on columns.
-</p>
-<strong>Column subset the data.table way:</strong>
+</div>
+</div>
+<!-- bs-docs-section -->
+<div class='bs-docs-section'>
+<h3 id="subset-columns">
+Subset on columns
+</h3>
 </div>
 </div>
 <!-- col-md-9 -->
+<!-- Right hand side -->
+<div class='col-md-3'>
+<div class='bs-sidebar hidden-print' role='complementary'>
+<ul class='nav bs-sidenav'>
+<li  > 
+<a href="#basics">Basics</a>
+<ul class='nav'>
+<li  > 
+<a href="#creation">Creation</a>
+</li>
+<li  > 
+<a href="#subset-rows">Subset on rows</a>
+</li>
+<li  > 
+<a href="#subset-columns">Subset on columns</a>
+</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
 </div>
 </div>
 <!-- FOOTER - YOU WOULDNT HAVE TO MODIFY THIS PART -->
