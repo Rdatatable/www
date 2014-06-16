@@ -1,0 +1,1690 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8">
+        <meta http-equiv="X-UA-Compatible" content="IE=edge">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="description" content="data.table, an R package for faster subset, grouping, assign, ordered joins and list columns in short and flexible syntax, for faster development.">
+        <meta name="keywords" content="R, data.table, dplyr, benchmark, big-data">
+        <meta name="author" content="Matt Dowle, Arun Srinivasan, other authors and contributors">
+
+        <title>data.table &middot; Homepage</title>
+
+        <!-- Bootstrap core CSS -->
+        <link href="../css/bootstrap.css" rel="stylesheet" media="screen">
+        <!-- Extensive set of glyphicons (maybe we'll need later?) -->
+<!--         <link href="css/whhg.css" rel="stylesheet"> -->
+        
+        <!-- HTML5 shim and Respond.js IE8 support of HTML5 elements and media queries -->
+        <!--[if lt IE 9]>
+            <script src="https://oss.maxcdn.com/libs/html5shiv/3.7.0/html5shiv.js"></script>
+            <script src="https://oss.maxcdn.com/libs/respond.js/1.4.2/respond.min.js"></script>
+        <![endif]-->
+
+        <!-- Google analytics
+        <script>
+            var _gaq = _gaq || [];
+            _gaq.push(['_setAccount', 'UA-146052-10']);
+            _gaq.push(['_trackPageview']);
+            (function() {
+                var ga = document.createElement('script'); ga.async = true;
+                ga.src = ('https:' == document.location.protocol ? 'https://ssl' : 'http://www') + '.google-analytics.com/ga.js';
+                var s = document.getElementsByTagName('script')[0]; s.parentNode.insertBefore(ga, s);
+            })();
+        </script>
+        -->
+    </head>
+    <body>
+
+        <!-- Master nav -->
+        <header>
+            <div class="navbar-default">
+<!--                 <div class="navbar-header"> -->
+                    <button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+                        <span class="sr-only">Toggle navigation</span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                        <span class="icon-bar"></span>
+                    </button>
+<!--                 </div> -->
+                <nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+                    <ul class="nav navbar-nav">
+                        <li><a href="../"><span class="glyphicon glyphicon-home"></span> data.table</a>
+                        </li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-left">
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-pencil"></span> Get started <span class="caret"></span></a>
+                            <ul class="dropdown-menu" aria-labelledby="docs">
+                                <li><a href="../about/">data.table project</a></li>
+                                <li><a href="../intro/">Quick Introduction</a></li>
+                                <li><a href="../learn-by-example/">Learn with example</a></li>
+                                <li><a href="../faq/">FAQs</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="./" class="active"><span class="glyphicon glyphicon-wrench"></span> Benchmarks</a></li>
+                        <li><a href="../gallery/"><span class="glyphicon glyphicon-book"></span> Gallery</a></li>
+                        <li><a href="../new/"><span class="glyphicon glyphicon-cog"></span> What's new</a></li>
+                    </ul>
+                    <ul class="nav navbar-nav navbar-right">
+                        <li class="dropdown">
+                            <a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-question-sign"></span> How to<span class="caret"></span></a>
+                            <ul class="dropdown-menu" aria-labelledby="docs">
+                                <li><a href="../get-involved/">Get involved</a></li>
+                            </ul>
+                        </li>
+                        <li><a href="../notes/">Release Notes</a></li>
+                    </ul>
+                </nav>
+            </div>
+        </header>
+        
+        <div class="container bs-docs-container">
+            <div class="row">
+                <div class="col-md-9" role="main">
+                    <!-- Introduction -->
+                    <div class="bs-docs-section">
+                        <h1 id="introduction" class="page-header">Benchmarks</h1>
+                                                
+                        <p>This page follows up on an <a href="http://arunsrinivasan.github.io/dplyr_benchmark/">earlier note</a> where we proposed we would provide a range of benchmarks on large data comparing <span class="text-info">data.table</span> to <span class="text-info">dplyr</span>. Here we test here on <strong>1,000 times larger</strong> data: <span class="text-success">half a billion rows</span> by <span class="text-success">six columns</span> (<code>~13GB</code>). We still consider 13GB fairly small but it should be big enough to make inferences that hold with even larger data; e.g., some users already have much larger <span class="text-info">data.table</span>s on machines with over 200GB RAM.</p>
+
+                        <div class="bs-callout bs-callout-info" id="datatable-row-limit">
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> Note that <span class="text-info">data.table</span> is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
+                        </div>
+
+                        <p>Let's begin by comparing <span class="text-info">data.table</span> with some <span class="text-info">dplyr</span> <span class="text-success">verbs</span>. For grouped operations, <span class="text-info">dplyr</span> provides a function <code>group_by()</code> to be combined with dplyr's verbs, to perform operations on each group. We'll compare performance both with and without grouping wherever possible.</p>
+
+                        <div class="bs-callout bs-callout-info" id="summarise-box-01">
+                            <h4>To compare performance, we will:</h4>
+                            <ol>
+                                <li>Group by various combinations of three out of the six columns (<code>id1</code>, <code>id2</code> and <code>id3</code>).</li>
+                                <li>Test with <strong>a)</strong> few groups (100) and <strong>b)</strong> many groups (100, 000).</li>
+                                <li>Test grouping on various types (character, integer and numeric).</li>
+                            </ol>
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are the <strong>minimum of three consecutive runs</strong>. Remember, these are large data benchmarks; they necessarily take a long time to run (many minutes for a single run, typically).
+                        </div>
+                        <div class="bs-docs-section">
+                        <div class="panel-group" id="accordion">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#summarise-functions">
+                                              <span class="glyphicon glyphicon-collapse-down"></span> Here are the functions to generate the test data 
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="summarise-functions" class="panel-collapse collapse"> <!-- in -->
+                                    <div class="panel-body">
+                                        <div class="highlight">
+                                            <pre><code class="R"><span class="text-muted"># setup data</span>
+require(data.table) <span class="text-muted"># v1.9.4</span>
+require(dplyr)      <span class="text-muted"># v0.1.2</span>
+
+<span class="text-muted"># For data.table</span>
+getDT <- function(n, k) {
+    set.seed(45L)
+    DT = data.table(id1 = sample(paste0("id", 1:k), n, TRUE), 
+             id2 = sample(1e2, n, TRUE), 
+             id3 = as.numeric(sample(10, n, TRUE)), 
+             v1 = sample(5, n, TRUE), 
+             v2 = sample(4, n, TRUE), 
+             v3 = sample(4, n, TRUE))
+}
+
+<span class="text-muted"># For dplyr</span>
+getDF <- function(n, k) {
+    DF = tbl_df(as.data.frame(getDT(n, k)))
+}</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                        
+                        <!-- Summarise -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="summarise">Grouping</h2>
+                                    <p><span class="text-success">summarise</span> is a <span class="text-info">dplyr</span> verb which summarises each group into a single row. We'll only consider <code>summarise()</code> <em>with</em> grouping here. In order to summarise results per group,  <span class="text-info">dplyr</span> first requires a separate call to <code>group_by()</code>, whereas <span class="text-info">data.table</span> allows for <span class="text-success">ad-hoc by</span> (obtaining groups taken care of implicitly). </p>
+                        
+                                    <div class="bs-callout bs-callout-info" id="summarise-box-02">
+                                        <h4><span class="glyphicon glyphicon-cog"></span> New optimisations in 1.9 - GForce</h4>
+                                        <p>From <span class="text-success">1.9.0</span>, <span class="text-info">data.table</span> also provides <em>much faster</em> optimised methods for <strong>common grouping</strong> operations like <code>sum</code>, <code>mean</code> etc. See <code>?GForce</code> or alternatively check out the <a href="../new/#GForce">What's new#GForce</a> section.</p>
+                                    </div>
+
+                                    <!-- summarise summarise -->
+                                    <h4 id="summarise_summarise">Benchmark summary (with grouping)</h4>
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Get data</th>
+                                                    <th>data.table and dplyr summary functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1, 100 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, lapply(.SD, sum), by=id1, .SDcols=4:6]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>19.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1) %.% </p>
+                                                            <p class="lead2">summarise(sum(v1), sum(v2), sum(v3))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>38.2s</td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1, 100,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e5L)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e5L)</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, lapply(.SD, sum), by=id1, .SDcols=4:6]</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>70.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1) %.% </p>
+                                                            <p class="lead2">summarise(sum(v1), sum(v2), sum(v3))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>148.3s</td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1,id2, 10,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2L)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2L)</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, lapply(.SD, sum), by="id1,id2", .SDcols=4:6]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>39.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1, id2) %.% </p>
+                                                            <p class="lead2">summarise(sum(v1), sum(v2), sum(v3))</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>89.6s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1,id2,id3, 100,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2L)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2L)</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, lapply(.SD, sum), by="id1,id2,id3", .SDcols=4:6]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>81.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1, id2, id3) %.% </p>
+                                                            <p class="lead2">summarise(sum(v1), sum(v2), sum(v3))</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>209.9s</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+
+                                    <div class="bs-callout bs-callout-warning" id="summarise-box-03">
+                                        <h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~2-2.5x faster than dplyr:</h4>
+                                        <p><span class="text-info">data.table</span> is approximately 2-2.5x faster than <span class="text-info">dplyr</span> summarising on this large dataset. <span class="text-info">dplyr</span> optimises <code>sum</code> through hybrid  evaluation whereas <span class="text-info">data.table</span> optimises through GForce.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Arrange -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="arrange">Ordering</h2>
+                                    <p><span class="text-success">arrange</span> is a <span class="text-info">dplyr</span> verb that reorders the rows of the input object. Here we'll just consider without grouping.</p>
+                                    
+                                    <!-- Arrange without grouping -->
+                                    <h4 id="summarise_arrange">Benchmark summary (without grouping)</h4>
+                                    <p>We'll benchmark the time taken to reorder the entire <span class="text-mono">data.frame</span> or <span class="text-mono">data.table</span> based on some random combinations of columns. The dataset will remain the same throughout this section.</p>
+
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Get data</th>
+                                                    <th>Order by</th>
+                                                    <th>data.table and dplyr arrange functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <span class="text-muted"># character</span>
+                                                            <p class="lead2">id1</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[order(id1)]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>114.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">arrange(DF, id1)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>758.5s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">same as above</span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <span class="text-muted"># integer</span>
+                                                            <p class="lead2">-id2</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[order(-id2)]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>113.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">arrange(DF, desc(id2))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>453.3s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">same as above</span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <span class="text-muted"># numeric</span>
+                                                            <p class="lead2">-id3</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[order(-id3)]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>153.7s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">arrange(DF, desc(id3))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>641.1s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">same as above</span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">id1, -id2</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[order(id1, -id2)]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>169.7s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">arrange(DF, id1, desc(id2))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>1440.7s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">same as above</span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">-id3, id1, id2</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[order(-id3, id1, id2)]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>468.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">arrange(DF, desc(id3), id1, id2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>4539.9s</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+
+                                    <div class="bs-callout bs-callout-warning" id="summarise-box-04">
+                                        <h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~4-10x faster than dplyr without grouping:</h4>
+                                        <p>In <span class="text-info">data.table 1.9</span>, a <em>much faster</em> radix-based ordering is implemented for <span class="text-mono">integer</span>, <span class="text-mono">numeric</span>, <span class="text-mono">character</span> and <span class="text-mono">logical</span> types and made available through the function <code>forder()</code>.</p>
+
+                                        <p>For more details, check <code>?forder</code> or the <a href="../new/#forder">What's new#forder</a> section.</p>
+                                    </div>
+
+                                        <p>In addition, from <code>v1.9.4</code>, a new function <code>setorder()</code> reorders a <span class="text-info">data.table</span> <em>by reference</em>. It is very memory efficient compared to <code>DT[order(...)]</code> since no copy is being made. By avoiding unnecessary overheads, it is also  faster than <code>DT[order(...)]</code>. Check the <a href="../new/#setorder">What's new#setorder</a> section for more explanation and example.</p>
+                                </div>
+                            </div>
+                        </div>
+
+
+                        <!-- Filter -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="filter">Subsetting</h2>
+                                    <p>Like <code>summarise()</code>, we'll perform <code>filter()</code> just with grouping. Our task is to obtain all rows corresponding to <code>max(v1)</code> within each group.</p>
+
+                                    <!-- summarise filter -->
+                                    <h4 id="summarise_filter">Benchmark summary (with grouping)</h4>
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>data.table and dplyr filter functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time Elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1, 100 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[DT[, .I[v1 == max(v1)], by=id1]$V1]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>66.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1) %.% filter(v1 == max(v1))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>91.6s</td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1, 100,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e5)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e5)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[DT[, .I[v1 == max(v1)], by=id1]$V1]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>88.8s<span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1) %.% filter(v1 == max(v1))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>282.0s</td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1,id2 10,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[DT[, .I[v1 == max(v1)], by="id1,id2"]$V1]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>117.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1,id2) %.% filter(v1 == max(v1))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>143.2s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1,id2,id3 100,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[DT[, .I[v1 == max(v1)], by="id1,id2,id3"]$V1]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>136.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1,id2,id3) %.% filter(v1 == max(v1))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>342.8s</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+                                    <div class="bs-callout bs-callout-warning" id="summarise-box-05">
+                                        <h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~1.2x to ~3.2x faster than dplyr:</h4>
+                                        <p>Once again, <span class="text-info">data.table</span> turns out faster than <span class="text-info">dplyr</span>. <code>.I</code> is a special variable that holds the row number in <code>DT</code> for each group. Check out <code>?data.table</code> for more information on all special variables.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <!-- Mutate -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="mutate">Updating</h2>
+                                    <p><span class="text-info">dplyr</span> <em>doesn't</em> like modifying objects <span class="text-success">in-place</span>, whereas it is a very important aspect of <span class="text-info">data.table's</span> philosophy. This is also one of the major philosophical differences between the two packages.</p>
+                                    <div class="bs-callout bs-callout-warning" id="summarise-box-06">
+                                        <h4>Design and performance trade-offs:</h4>
+                                        <p>1) <strong>dplyr</strong> <em>shallow copies</em> the data and then adds or modifies columns. Even though the cost to shallow copy is normally negligible, it does increase with the number of columns. <a href="http://stackoverflow.com/a/21704664/559784">This stackoverflow post</a> gives an idea about the performance due to shallow copy on datasets with huge amounts of columns.</p>
+                                        <p>2) When modifying existing columns, <strong>dplyr</strong> will have to make a <strong>copy</strong> of <em>that column</em> before modifying, due to its <em>design</em>. This'll affect <em>performance</em>.</p>
+                                        <p>3) To our knowledge, it's <strong>not</strong> possible currently to modify only a subset of rows (say, based on a condition) using <strong>dplyr</strong> without copying that column. Checkout the <a href="../grammar/#sub-assign-by-reference">grammar#sub-assignment-by-reference</a> section for more information on this topic.</p>
+                                    </div>
+
+                                    <p>Here, we'll only consider <code>mutate()</code> to <span class="text-info">data.table's</span> <code>:=</code> (or equivalently <code>set</code>) in creating new columns, while grouping. The task we consider is quite simple and straightforward. For each group, normalise all non-grouping columns by that groups's <code>max</code> value. To keep the benchmarks fair, the newly created columns for <span class="text-info">data.table</span> are removed each time before running again (code not shown).</p>
+                                    
+                                    <!-- grouped mutate -->
+                                    <h4 id="summarise_filter">Benchmark summary (with grouping)</h4>
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>data.table and dplyr filter functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time Elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1, 100 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = id1]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>20.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1) %.% mutate(v4 = v1/max(v1)) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>36.0s</td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1, 100,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e5)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e5)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = id1]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>96.6s<span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1) %.% mutate(v4 = v1/max(v1)) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>146.1s</td>
+                                                </tr>
+                                            </tbody>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1,id2 10,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = "id1,id2"]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>50.3s<span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1,id2) %.% mutate(v4 = v1/max(v1)) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>88.6s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-muted"># id1,id2,id3 100,000 groups</span>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(5e8, 1e2)</p>
+                                                            <p class="lead2">DF = getDF(5e8, 1e2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = "id1,id2,id3"]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>101.3s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF %.% group_by(id1,id2,id3) %.% mutate(v4=v1/max(v1))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>204.8s</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+                                    <div class="bs-callout bs-callout-warning" id="summarisef-box-07">
+                                        <h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~1.5x to ~2.25x faster than dplyr:</h4>
+                                        <p>Once again, <span class="text-info">data.table</span> turns out faster than <span class="text-info">dplyr</span>. <code>.I</code> is a special variable that holds the row number in <code>DT</code> for each group. Check out <code>?data.table</code> for more information on all special variables.</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- Conclusion -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="verbs-conclusion">Conclusion</h2>
+                                    <p class="lead">Yet to be done...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div> <!-- end of Grouping -->
+
+                    <!-- joins -->
+                    <div class="bs-docs-section">
+                        <h1 id="joins" class="page-header">vs dplyr Joins</h1>
+                        <p class="lead"> In this section, we'll benchmark <span class="text-success">joins</span> in <span class="text-info">dplyr</span> against <span class="text-info">data.table</span>. There are currently four joins implemented in <span class="text-info">dplyr</span>. We'll consider only <span class="text-success">left join</span> for now. We will update with the other joins later.</p>
+
+<!--
+        <div class="alert alert-dismissable alert-danger">
+            <button type="button" class="close" data-dismiss="alert">&times;</button>
+            <p></p>
+        </div>
+-->
+                        
+                         <div class="bs-callout bs-callout-info" id="joins-box-01">
+                            <h4>To compare performance, we will:</h4>
+                            <ol>
+                                <li>Construct a large <span class="text-info">data.table</span> - <strong>5e8 rows</strong> and <strong>five columns</strong> and another <span class="text-info">data.table</span> which contains the unique values from the first <span class="text-info">data.table</span> based on the columns to join by.</li>
+                                <li>Generate two different data sets - one with relatively <strong>less</strong> unique groupings (~100-1000) and the other <strong>many</strong> groups (~100,000).</li>
+                                <li>Also test the performance of joins on <strong>multiple columns</strong>.</li>
+                            </ol>
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
+                        </div>
+
+                        <p>The functions required to generate these large datasets (mentioned above) for both <span class="text-info">data.table</span> and <span class="text-info">dplyr</span> cases are shown below. Click on the box below to collapse and reveal the code.</p>
+                        <div class="panel-group" id="accordion">
+                            <div class="panel panel-default">
+                                <div class="panel-heading">
+                                    <h4 class="panel-title">
+                                        <a data-toggle="collapse" data-parent="#accordion" href="#joins-functions">
+                                              <span class="glyphicon glyphicon-collapse-down"></span> Here are the functions to generate the required data 
+                                        </a>
+                                    </h4>
+                                </div>
+                                <div id="joins-functions" class="panel-collapse collapse"> <!-- in -->
+                                    <div class="panel-body">
+                                        <div class="highlight">
+                                            <pre><code class="R"><span class="text-muted"># setup data</span>
+require(data.table) <span class="text-muted"># v1.9.4</span>
+require(dplyr)      <span class="text-muted"># v0.1.2</span>
+
+<span class="text-muted"># For data.table</span>
+getDTx <- function(n, k) {
+    set.seed(45L)
+    DT = data.table(id1 = sample(paste0("id", 1:k), n, TRUE), 
+             id2 = sample(-k:k, n, TRUE), 
+             id3 = as.numeric(sample(-k:k, n, TRUE)), 
+             v1 = sample(5, n, TRUE), 
+             v2 = sample(4, n, TRUE))
+}
+
+getDTy <- function(DT, by) unique(DT, by=by)[, by, with=FALSE]
+
+<span class="text-muted"># For dplyr</span>
+getDFx <- function(n, k) {
+    DF = tbl_df(as.data.frame(getDTx(n, k)))
+}
+
+getDFy <- function(DT, by) as.data.frame(getDTy(DT, by))</code></pre>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div> <!-- accordion join_functions -->
+
+                        <!-- Left join -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="left">Left join</h2>
+                                    
+                                    <!-- summarise summarise -->
+                                    <h4 id="join_left">Benchmark summary</h4>
+
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Join cols + groups</th>
+                                                    <th>data.table and dplyr functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DTx = getDTx(5e8, 100)</p>
+                                                            <p class="lead2">DFx = getDFx(5e8, 100)</p>
+                                                            <p class="lead2">DTy = getDTy(DTx, "id1")</p>
+                                                            <p class="lead2">DFy = getDFy(DTx, "id1")</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono" align="center">
+                                                            <p class="lead2">id1</p>
+                                                            <p class="lead2">100</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">setkeyv(DTx, "id1")</p>
+                                                            <p class="lead2">setkeyv(DTy, "id1")</p>
+                                                            <p class="lead2">DTx[DTy]</p>
+                                                        </span>                                                        
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>84.7s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">left_join(DFy, DFx, by="id1")</span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>130.3s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DTy = getDTy(DTx, "id2")</p>
+                                                            <p class="lead2">DFy = getDFy(DTx, "id2")</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono" align="center">
+                                                            <p class="lead2">id2</p>
+                                                            <p class="lead2">200</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">setkeyv(DTx, "id2")</p>
+                                                            <p class="lead2">setkeyv(DTy, "id2")</p>
+                                                            <p class="lead2">DTx[DTy]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>91.5s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">left_join(DFy, DFx, by="id2")</span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>142.6s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DTy = getDTy(DTx, "id3")</p>
+                                                            <p class="lead2">DFy = getDFy(DTx, "id3")</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono" align="center">
+                                                            <p class="lead2">id3</p>
+                                                            <p class="lead2">200</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">setkeyv(DTx, "id3")</p>
+                                                            <p class="lead2">setkeyv(DTy, "id3")</p>
+                                                            <p class="lead2">DTx[DTy]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>147.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">left_join(DFy, DFx, by="id3")</span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>159.8s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">byv = c("id1", "id2")</p>
+                                                            <p class="lead2">DTy = getDTy(DTx, byv)</p>
+                                                            <p class="lead2">DFy = getDFy(DTx, byv)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono" align="center">
+                                                            <p class="lead2">id1,id2</p>
+                                                            <p class="lead2">20,000</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">setkeyv(DTx, byv)</p>
+                                                            <p class="lead2">setkeyv(DTy, byv)</p>
+                                                            <p class="lead2">DTx[DTy]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>159.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">left_join(DFy, DFx, by=byv)</span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>200.9s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">byv = c("id1", "id2", "id3")</p>
+                                                            <p class="lead2">DTx = getDTx(5e8, 10)</p>
+                                                            <p class="lead2">DFx = getDFx(5e8, 10)</p>
+                                                            <p class="lead2">DTy = getDTy(DTx, byv)</p>
+                                                            <p class="lead2">DFy = getDFy(DTx, byv)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono" align="center">
+                                                            <p class="lead2">id1,id2,id3</p>
+                                                            <p class="lead2">~4,000</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">setkeyv(DTx, byv)</p>
+                                                            <p class="lead2">setkeyv(DTy, byv)</p>
+                                                            <p class="lead2">DTx[DTy]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>188.5s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">left_join(DFy, DFx, by=byv)</span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>252.5s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">byv = c("id1", "id2", "id3")</p>
+                                                            <p class="lead2">DTx = getDTx(5e8, 30)</p>
+                                                            <p class="lead2">DFx = getDFx(5e8, 30)</p>
+                                                            <p class="lead2">DTy = getDTy(DTx, byv)</p>
+                                                            <p class="lead2">DFy = getDFy(DTx, byv)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono" align="center">
+                                                            <p class="lead2">id1,id2,id3</p>
+                                                            <p class="lead2">~100,000</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">setkeyv(DTx, byv)</p>
+                                                            <p class="lead2">setkeyv(DTy, byv)</p>
+                                                            <p class="lead2">DTx[DTy]</p>
+                                                        </span>                                                                                                                
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>252.8s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">left_join(DFy, DFx, by=byv)</span>
+                                                    </td>
+                                                    <td>dplyr</td>
+                                                    <td>720.1s</td>
+                                                </tr>
+                                            </tbody>
+                                            
+                                        </table> <!-- table -->
+                                    </div>
+
+                                    <div class="bs-callout bs-callout-warning" id="joins-box-02">
+                                        <h4><span class="glyphicon glyphicon-bullhorn"></span> data.table's left join is ~1.1-2.8x faster than dplyr:</h4>
+                                        <p><span class="text-info">data.tabe</span> uses <a href="../new/#binary-search">binary search</a> based approach for joins, where as <span class="text-info">dplyr</span> uses hash tables. <span class="text-info">data.table's</span> choice of algorithm is deliberate because it also has <a href="../grammar#rolling-joins">fast prevailing orderd joins</a> (<span class="text-mono">roll=TRUE</span>), a.k.a last observation carried forward, in mind. This additional functionality, which <span class="text-info">dplyr</span> doesn't have currently, comes as a natural extension due to binary search based joins without compromising in speed.</p>
+                                    </div>
+                                </div>
+                            </div>
+
+                        <!-- Conclusion -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="joins-conclusion">Conclusion</h2>
+                                    <p class="lead">Yet to be done...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        </div> <!-- left join -->                        
+                    </div>
+                    
+                    <!-- melt -->
+                    <div class="bs-docs-section">
+                        <h1 id="reshape" class="page-header">vs Reshape</h1>
+                        <p class="lead"><span class="text-info">data.table 1.9</span> imports the package <span class="text-info">reshape2</span> and implements <span class="text-info">data.table</span> specific methods for  both <span class="text-success">melt</span> and <span class="text-success">dcast</span> in <code>C</code>. It's both fast and memory efficient. We'll compare them here to with <span class="text-info">reshape2's</span> respective methods.</p> 
+                                                
+                         <div class="bs-callout bs-callout-info" id="reshape-box-01">
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
+                        </div>
+
+                        <h2 id="melt">Melt</h2>
+                       
+                        <p>Let's setup functions to generate data first.</p>
+                        <div class="highlight">
+                            <pre><code class="R"><span class="text-muted"># setup data</span>
+require(data.table) <span class="text-muted"># 1.9.4</span>
+require(reshape2)
+getDT <- function(n) {
+    set.seed(45L)
+    DT <- data.table(x = sample(letters, n, TRUE), y = sample(LETTERS, n, TRUE),
+                     za = rnorm(n), zb = rnorm(n), zc = as.numeric(sample(c(NA,1:5), n, TRUE)))
+}
+
+getDF <- function(n) as.data.frame(getDT(n))</code></pre>
+                        </div>
+
+                        <p>We'll benchmark on <code>1e8 rows</code>. Also, we'll compare <code>melt</code> with and without the argument <code>na.rm</code>.</p>
+                        <div class="bs-callout bs-callout-info" id="reshape-box-02">
+                            <h4><span class="glyphicon glyphicon-cog"></span> New optimisations to reshape2's melt:</h4>
+                            <p>Kevin Ushey has recently added a <a href="https://github.com/hadley/reshape/pull/39"><span class="text-mono">C++</span> version of <span class="text-mono">melt</span></a> to the <span class="text-mono">reshape2</span> package. At the time of writing, it's still not available on CRAN. We'll therefore benchmark both <span class="text-mono">melt</span> from CRAN version 1.2.2 and the new <span class="text-mono">C++</span> version (commit 148).</p>
+                        </div>                        
+
+                                    <!-- melt table -->
+                                    <h4 id="reshape_melt">Benchmark summary</h4>
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>data.table and reshape2's melt functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time Elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(1e8)</p>
+                                                            <p class="lead2">DF = getDF(1e8)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">melt(DT, id=1:2) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>6.5s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">melt(DF, id=1:2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2 - CRAN</td>
+                                                    <td>457.1s</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">melt(DF, id=1:2)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2 - new <span class="text-mono">C++</span></td>
+                                                    <td>9.1s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">melt(DT, id=1:2, na.rm=TRUE) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>8.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">melt(DF, id=1:2, na.rm=TRUE) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2 - CRAN</td>
+                                                    <td>1090.9s</td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">melt(DF, id=1:2, na.rm=TRUE) </p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2 - new <span class="text-mono">C++</span></td>
+                                                    <td>109.3s</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+
+                        
+                        <div class="bs-callout bs-callout-warning" id="reshape-box-03">
+                            <h4><span class="glyphicon glyphicon-bullhorn"></span> melt.data.table is ~1.4x and ~13.5x faster than reshape2's C++ version of melt </h4>
+                            <p>Note that <code>melt.data.table</code> also takes care of removing <code>NA</code> (when <code>na.rm=TRUE</code>) efficiently from within <span class="text-mono">C</span>, as opposed to the new <span class="text-mono">C++</span> implementation, as is evident from the runtime.</p>
+                            <p>This also shows how incredibly slow the CRAN version (1.2.2) of <code>melt.data.frame</code> is (~70-134x slower).</p>
+                        </div>
+                    </div>
+
+                    <!-- dcast -->
+                    <div class="bs-docs-section">
+                        <h2 id="dcast">Cast</h2>
+                        <p>The <span class="text-success">dcast</span> function from the <span class="text-info">reshape2</span> package is not a S3 generic yet. Therefore for the moment, we'll have to use the function as <code>dcast.data.table</code>. All arguments except for <code>margins</code> is implemented.</p>
+                        
+<!--                         <h3>Setup data:</h3> -->
+                            <div class="highlight">
+                            <pre><code class="R"><span class="text-muted"># setup data</span>
+require(data.table) <span class="text-muted"># 1.9.4</span>
+require(reshape2)
+getDT <- function(n) {
+    set.seed(45L)
+    DT <- data.table(aa = sample(1e2, n, TRUE), bb = sample(1e3, n, TRUE), 
+                 cc = sample(letters, n, TRUE), dd = runif(n))
+}
+
+getDF <- function(n) as.data.frame(getDT(n))</code></pre>
+                            </div>
+                        <p>Let's benchmark on <code>1e8 rows</code>. Columns <span class="text-info">aa</span> and <span class="text-info">bb</span> both have 1e2 and 1e3 unique values each.</p>
+                        
+                                    <!-- dcast table -->
+                                    <h4 id="reshape_dcast">Benchmark summary</h4>
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Groups</th>
+                                                    <th>data.table and reshape2's melt functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time Elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(1e8)</p>
+                                                            <p class="lead2">DF = getDF(1e8)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">100</td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">dcast.data.table(DT, aa ~ cc, fun=sum)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>6.9s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">reshape2:::dcast(DF, aa ~ cc, fun=sum)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2</td>
+                                                    <td>45.2s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">1,000</td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">dcast.data.table(DT, bb ~ cc, fun=sum)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>9.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">reshape2:::dcast(DF, bb ~ cc, fun=sum)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2</td>
+                                                    <td>48.4s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">100,000</td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">dcast.data.table(DT, aa + bb ~ cc, fun=sum)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>20.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">reshape2:::dcast(DF, aa + bb ~ cc, fun=sum)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>reshape2</td>
+                                                    <td>144.2</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+                        
+                        <div class="bs-callout bs-callout-warning" id="reshape-box-04">
+                            <h4><span class="glyphicon glyphicon-bullhorn"></span> dcast.data.table is ~5-7x faster than reshape2:::dcast</h4>
+                            <p><code>dcast.data.table</code> takes advantage of <span class="text-info">data.table's</span> fast ordering, grouping, internal optimisations and binary search for drastic speed-ups. This is also the main reason why reshaping was implemented within <span class="text-info">data.table</span> as opposed to making a pull request to <span class="text-info">reshape2</span>. </p>
+                        </div>
+
+                        <!-- Conclusion -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="reshape-conclusion">Conclusion</h2>
+                                    <p class="lead">Yet to be done...</p>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="bs-docs-section">
+                            <h1 id="baseR" class="page-header">vs base R</h1>
+                            <p class="lead">base R's <code>unique()</code> as well as <code>duplicated()</code> are a very efficient and extremely fast, when operated on <code>vectors</code>. However their <span class="text-info">data.frame</span> methods aren't as efficient and tends to get very slow on relatively large data sizes. In this section, we'd like to highlight the performance gains of these methods implemented in <span class="text-info">data.table</span>.</p> 
+                            
+                         <div class="bs-callout bs-callout-info" id="baseR-box-01">
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
+                        </div>
+                            <p>Let's create a data set with <span class="text-success">1e8 rows</span> and three columns. We'll compare <code>unique()</code> alone on <span class="text-info">data.table</span> and <span class="text-info">data.frame</span> over certain column combinations. Here are the functions to generate the data:</p>
+                            
+                            <pre><code><span class="text-muted"># For data.table</span>
+getDT <- function(n) data.table(x=sample(100, n, TRUE), 
+         y=sample(paste("id", 1:100, sep=""), n, TRUE), 
+         z=as.numeric(sample(-100:100, n, TRUE)))
+
+<span class="text-muted"># For dplyr</span>
+getDF <- function(n) as.data.frame(getDT(n))</code></pre>
+
+                            <div class="bs-docs-section">
+                                <h2 id="unique">Unique</h2>
+                            </div>
+
+                                    <!-- unique table -->
+                                    <h4 id="unique_base">Benchmark summary</h4>
+                                    <div class="bs-example table-responsive">
+                                        <table class="table table-striped table-bordered table-hover">
+                                            <thead>
+                                                <tr>
+                                                    <th>Data</th>
+                                                    <th>Groups</th>
+                                                    <th>data.table and reshape2's melt functions</th>
+                                                    <th>Package</th>
+                                                    <th>Time Elapsed</th>
+                                                </tr>
+                                            </thead>
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DT = getDT(1e8)</p>
+                                                            <p class="lead2">DF = getDF(1e8)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2"><span class="text-muted"># integer</span></p>
+                                                            <p class="lead2" align="center">x</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DT, by="x")</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>1.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF[duplicated(DF$x), ]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>base's unique</td>
+                                                    <td>22.5s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2"><span class="text-muted"># character</span></p>
+                                                            <p class="lead2" align="center">y</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DT, by="y")</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>1.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF[duplicated(DF$y), ]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>base's unique</td>
+                                                    <td>23.4s</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2"><span class="text-muted"># numeric</span></p>
+                                                            <p class="lead2" align="center">z</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DT, by="z")</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>9.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF[duplicated(DF$z), ]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>base's unique</td>
+                                                    <td>25.6</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2" align="center">x,y</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DT, by=c("x", "y"))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>4.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF[duplicated(DF[, c("x", "y")]), ]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>base's unique</td>
+                                                    <td>89.6</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2" align="center">y, z</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DT, by=c("y", "z"))</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>11.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">DF[duplicated(DF[, c("y", "z")]), ]</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>base's unique</td>
+                                                    <td>189.2</td>
+                                                </tr>
+                                            </tbody>
+
+                                            <tbody>
+                                                <tr>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2">same as above</p>
+                                                        </span>
+                                                    </td>
+                                                    <td rowspan="3" style="vertical-align: middle;">
+                                                        <span class="text-mono">
+                                                            <p class="lead2" align="center">x, y, z</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DT)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td><strong>data.table</strong></td>
+                                                    <td>12.9s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+                                                </tr>
+                                                <tr>
+                                                    <td>
+                                                        <span class="text-mono">
+                                                            <p class="lead2">unique(DF)</p>
+                                                        </span>
+                                                    </td>
+                                                    <td>base's unique</td>
+                                                    <td>261.7</td>
+                                                </tr>
+                                            </tbody>
+
+                                        </table>
+                                    </div>
+                        <div class="bs-callout bs-callout-warning" id="baseR-box-02">
+                            <h4><span class="glyphicon glyphicon-bullhorn"></span> unique.data.table is ~2.5-21x faster than base's unique:</h4>
+                            <p><span class="text-info">data.table</span> gains drastic speed for <code>unique</code> and <code>duplicated</code> <span class="text-info">data.table</span> methods once again by using the internal <code>forder</code>.</p>
+                        </div>
+
+                        <!-- Conclusion -->
+                        <div class="bs-docs-section">
+                            <div class="row">
+                                <div class="col-lg-12">
+                                    <h2 id="baseR-conclusion">Conclusion</h2>
+                                    <p class="lead">Yet to be done...</p>
+                                </div>
+                            </div>
+                        </div>
+                            
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="bs-sidebar hidden-print" role="complementary">
+                        <ul class="nav bs-sidenav">
+                            <li><a href="#introduction">Introduction</a></li>
+                            <li><a href="#verbs">vs dplyr verbs</a>
+                                <ul class="nav">
+                                    <li><a href="#summarise">Summarise</a></li>
+                                    <li><a href="#arrange">Arrange</a></li>
+                                    <li><a href="#filter">Filter</a></li>
+                                    <li><a href="#mutate">Mutate</a></li>
+                                    <li><a href="#verbs-conclusion">Conclusion</a></li>                                    
+                                </ul>
+                            </li>
+                            <li><a href="#joins">vs dplyr Joins</a>
+                                <ul class="nav">
+                                    <li><a href="#left">Left join</a></li>
+                                    <li><a href="#joins-conclusion">Conclusion</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#reshape">vs Reshape</a>
+                                <ul class="nav">
+                                    <li><a href="#melt">Melt</a></li>
+                                    <li><a href="#dcast">Cast</a></li>
+                                    <li><a href="#reshape-conclusion">Conclusion</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#baseR">vs base R</a>
+                                <ul class="nav">
+                                    <li><a href="#unique">Unique</a></li>
+                                    <li><a href="#baseR-conclusion">Conclusion</a></li>
+                                </ul>
+                            </li>
+                            <li><a href="#top">Back to top</a></li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Footer -->
+        <footer class="bs-footer" role="contentinfo">
+        
+            <div class="container">
+
+                <iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=watch&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+
+                <iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=fork&count=true"
+                allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
+
+
+                <div class="footer-links">
+<!--                 </div> -->
+                <ul class="footer-links muted">
+                    <p>Designed using <a href="http://getbootstrap.com">Bootstrap</a> and styled with <a href="http://bootswatch.com/">Bootswatch</a> using <a href="http://bootswatch.com/cerulean">Cerulean</a> theme.</p>
+                    <li>Version 1.9.2</li>
+                    <li>&middot;</li>
+                    <li><a href="https://github.com/Rdatatable/data.table">Homepage</a></li>
+                    <li>&middot;</li>
+                    <li><a href="https://github.com/Rdatatable/data.table/graphs/contributors">Contributors</a></li>
+                    <li>&middot;</li>
+                    <li><a href="https://github.com/Rdatatable/data.table/issues?direction=desc&labels=bug&sort=updated&state=open">Issues</a></li>
+                    <li>&middot;</li>
+                    <li><a href="https://github.com/Rdatatable/data.table/issues?direction=desc&labels=feature+request&page=1&sort=updated&state=open">Feature Requests</a></li>
+                    <li>&middot;</li>
+                    <li><a href="https://r-forge.r-project.org/mail/?group_id=240">Mailing list</a></li>
+                    <li>&middot;</li>
+                    <li><a href="http://stackoverflow.com/questions/tagged/r+data.table">Stackoverflow tag</a></li>
+                    <span class="pull-right"><a href="#top">Back to top</a></span>
+                </ul>
+<!--             </div> -->
+        </footer>
+
+        <script src="https://code.jquery.com/jquery.js"></script>
+        <script src="../js/bootstrap.min.js"></script>
+        <script src="../js/docs.min.js"></script>
+
+        <!-- Start of StatCounter Code -->
+        <script type="text/javascript">
+            var sc_project=6237851;
+            var sc_invisible=1;
+            var sc_security="518c93ca";
+        </script>
+
+        <script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
+        <noscript>
+            <div class="statcounter">
+                <a title="tumblr stats" href="http://statcounter.com/tumblr/" >
+                <img class="statcounter" src="http://c.statcounter.com/6237851/0/518c93ca/1/" alt="tumblr stats" ></a>
+            </div>
+        </noscript>
+        <!-- End of StatCounter Code -->
+
+    </body>
+</html>
