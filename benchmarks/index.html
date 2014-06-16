@@ -84,51 +84,32 @@
                 <div class="col-md-9" role="main">
                     <!-- Introduction -->
                     <div class="bs-docs-section">
-                        <h1 id="introduction" class="page-header">Introduction</h1>
-                        <p class="lead">The recent CRAN release <a href="http://cran.r-project.org/web/packages/dplyr/index.html">dplyr 0.1.2</a> contains <a href="http://cran.r-project.org/web/packages/dplyr/vignettes/benchmark-baseball.html">benchmarks comparing data.table</a>, using baseball data. It now includes the <a href="http://arunsrinivasan.github.io/dplyr_benchmark/">changes we suggested</a> for <span class="text-info">data.table</span> syntax. However the main issue that still remains is that the data size is <em>so small</em> that it almost fits entirely in cache. </p>
+                        <h1 id="introduction" class="page-header">Benchmarks</h1>
                                                 
-                        <p>Recently, <a href="http://stackoverflow.com/questions/21435339/data-table-vs-dplyr-can-one-do-something-well-the-other-cant-or-does-poorly#comment32357798_21435339">Hadley wrote on stackoverflow</a> that because a majority algorithms are of <code>O(n)</code> complexity, these small data benchmarks should be sufficient.</p>
-                         <div class="bs-callout bs-callout-warning" id="hadley-SO-benchmark-small-data-01">
-                            <h4>Hadley on SO regarding benchmarks on small data:</h4>
-                            <p>I've stuck with small data sizes since the majority of the algorithms are <code>O(n)</code>, but I'd be happy to see counter examples.</p>
-                        </div>
-                        <p>In our opinion however, such benchmarks on 10MB datasets do not indicate how well the tool scales to larger data. Earlier when we posted the link to our benchmarks on the <a href="http://blog.rstudio.org/2014/01/17/introducing-dplyr/">R-studio blog</a>, Hadley had replied:</p> 
-                         <div class="bs-callout bs-callout-warning" id="hadley-SO-benchmark-small-data-02">
-                            <h4>Hadley's reply to our earlier benchmark:</h4>
-                            <p>Looks great – thanks for putting this together, Arun. Would be great to do a similar comparison for what you think is a reasonably sized dataset, outside of the limitations of a vignette.</p>
-                        </div>
-                        
-                        <p>We also proposed <a href="http://arunsrinivasan.github.io/dplyr_benchmark/">in our earlier benchmark</a> that we'll provide a range of benchmarks on large data. And we intend to do exactly that here. We test here on <strong>1,000 times</strong> larger data; i.e., <code>~13GB</code> with <span class="text-success">half a billion rows</span> and <span class="text-success">six columns</span>. Although, some <span class="text-info">data.table</span> users have over 200GB RAM and go much larger with more columns.</p>
+                        <p>This page follows up on an <a href="http://arunsrinivasan.github.io/dplyr_benchmark/">earlier note</a> where we proposed we would provide a range of benchmarks on large data comparing <span class="text-info">data.table</span> to <span class="text-info">dplyr</span>. Here we test here on <strong>1,000 times larger</strong> data: <span class="text-success">half a billion rows</span> by <span class="text-success">six columns</span> (<code>~13GB</code>). We still consider 13GB fairly small but it should be big enough to make inferences that hold with even larger data; e.g., some users already have much larger <span class="text-info">data.table</span>s on machines with over 200GB RAM.</p>
 
                         <div class="bs-callout bs-callout-info" id="datatable-row-limit">
-                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> Note that <span class="text-info">data.table</span> is currently limited to 2 billion rows.
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> Note that <span class="text-info">data.table</span> is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
                         </div>
-                    </div>
 
-
-                    <!-- dplyr benchmarks -->
-                    <div class="bs-docs-section">
-                        <h1 id="verbs" class="page-header">vs dplyr verbs</h1>
-                                                <p class="lead">Let's begin by comparing of <span class="text-info">data.table</span> with some of <span class="text-info">dplyr</span> <span class="text-success">verbs</span>. For grouped operations, <span class="text-info">dplyr</span> provides a function <code>group_by()</code> that is to be combined with dplyr's verbs, to perform operations on each group. We'll compare performance both with and without grouping wherever possible.</p>
+                        <p>Let's begin by comparing <span class="text-info">data.table</span> with some <span class="text-info">dplyr</span> <span class="text-success">verbs</span>. For grouped operations, <span class="text-info">dplyr</span> provides a function <code>group_by()</code> to be combined with dplyr's verbs, to perform operations on each group. We'll compare performance both with and without grouping wherever possible.</p>
 
                         <div class="bs-callout bs-callout-info" id="summarise-box-01">
                             <h4>To compare performance, we will:</h4>
                             <ol>
-                                <li>Test on relatively larger dataset - half a billion rows and six columns. Three out of the six columns (<code>id1</code>, <code>id2</code> and <code>id3</code>) to group by and the remaining three columns to compute the <code>sum</code> on.</li>
-                                <li>Test on dataset with <strong>a)</strong> few groups (100) and <strong>b)</strong> many groups (100, 000).</li>
-                                <li>Also test grouping on 1, 2 and 3 columns, of varying types (character, integer and numeric).</li>
+                                <li>Group by various combinations of three out of the six columns (<code>id1</code>, <code>id2</code> and <code>id3</code>).</li>
+                                <li>Test with <strong>a)</strong> few groups (100) and <strong>b)</strong> many groups (100, 000).</li>
+                                <li>Test grouping on various types (character, integer and numeric).</li>
                             </ol>
-                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are the minimum of three consecutive runs.                        
+                            <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are the <strong>minimum of three consecutive runs</strong>. Remember, these are large data benchmarks; they necessarily take a long time to run (many minutes for a single run, typically).
                         </div>
-                        <p>The functions required to generate these large datasets (mentioned above) for both <span class="text-info">data.table</span> and <span class="text-info">dplyr</span> cases are shown below. Click on the box below to collapse and reveal the code.</p>
-
                         <div class="bs-docs-section">
                         <div class="panel-group" id="accordion">
                             <div class="panel panel-default">
                                 <div class="panel-heading">
                                     <h4 class="panel-title">
                                         <a data-toggle="collapse" data-parent="#accordion" href="#summarise-functions">
-                                              <span class="glyphicon glyphicon-collapse-down"></span> Here are the functions to generate the required data 
+                                              <span class="glyphicon glyphicon-collapse-down"></span> Here are the functions to generate the test data 
                                         </a>
                                     </h4>
                                 </div>
@@ -165,7 +146,7 @@ getDF <- function(n, k) {
                         <div class="bs-docs-section">
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <h2 id="summarise">Summarise</h2>
+                                    <h2 id="summarise">Grouping</h2>
                                     <p><span class="text-success">summarise</span> is a <span class="text-info">dplyr</span> verb which summarises each group into a single row. We'll only consider <code>summarise()</code> <em>with</em> grouping here. In order to summarise results per group,  <span class="text-info">dplyr</span> first requires a separate call to <code>group_by()</code>, whereas <span class="text-info">data.table</span> allows for <span class="text-success">ad-hoc by</span> (obtaining groups taken care of implicitly). </p>
                         
                                     <div class="bs-callout bs-callout-info" id="summarise-box-02">
@@ -314,7 +295,7 @@ getDF <- function(n, k) {
                         <div class="bs-docs-section">
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <h2 id="arrange">Arrange</h2>
+                                    <h2 id="arrange">Ordering</h2>
                                     <p><span class="text-success">arrange</span> is a <span class="text-info">dplyr</span> verb that reorders the rows of the input object. Here we'll just consider without grouping.</p>
                                     
                                     <!-- Arrange without grouping -->
@@ -503,7 +484,7 @@ getDF <- function(n, k) {
                         <div class="bs-docs-section">
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <h2 id="filter">Filter</h2>
+                                    <h2 id="filter">Subsetting</h2>
                                     <p>Like <code>summarise()</code>, we'll perform <code>filter()</code> just with grouping. Our task is to obtain all rows corresponding to <code>max(v1)</code> within each group.</p>
 
                                     <!-- summarise filter -->
@@ -642,7 +623,7 @@ getDF <- function(n, k) {
                         <div class="bs-docs-section">
                             <div class="row">
                                 <div class="col-lg-12">
-                                    <h2 id="mutate">Mutate</h2>
+                                    <h2 id="mutate">Updating</h2>
                                     <p><span class="text-info">dplyr</span> <em>doesn't</em> like modifying objects <span class="text-success">in-place</span>, whereas it is a very important aspect of <span class="text-info">data.table's</span> philosophy. This is also one of the major philosophical differences between the two packages.</p>
                                     <div class="bs-callout bs-callout-warning" id="summarise-box-06">
                                         <h4>Design and performance trade-offs:</h4>
