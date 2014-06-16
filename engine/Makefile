@@ -27,10 +27,10 @@ about.html: R/01.about.Rmd
 	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../about/index.html ./R/01.about.Rmd
 
 quick-intro.html: R/02.quick-intro.Rmd
-	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../about/index.html ./R/01.about.Rmd
+	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../intro/index.html ./R/02.quick-intro.Rmd
 
 learn-by-example.html: R/04.learn-by-example.Rmd
-	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../about/index.html ./R/01.about.Rmd
+	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../learn-by-example/index.html ./R/04.learn-by-example.Rmd
 
 clean:
 	rm -f ./R/*.Rmd

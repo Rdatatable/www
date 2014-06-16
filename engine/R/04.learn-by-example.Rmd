@@ -1,0 +1,226 @@
+<!-- <body> -->
+<!-- Master nav - DO NOT TOUCH-->
+<header>
+<div class="navbar-default">
+<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+<span class="sr-only">Toggle navigation</span>
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+</button>
+<nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+<ul class="nav navbar-nav">
+<li><a href="../"><span class="glyphicon glyphicon-home"></span> data.table</a>
+</li>
+</ul>
+<ul class="nav navbar-nav navbar-left">
+<li class="dropdown">
+<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-pencil"></span> Get started <span class="caret"></span></a>
+<ul class="dropdown-menu" aria-labelledby="docs">
+<li><a href="../about/">data.table project</a></li>
+<li><a href="../intro/">Quick Introduction</a></li>
+<li><a href="./">Learn with example</a></li>
+<li><a href="../faq/">FAQs</a></li>
+</ul>
+</li>
+<li><a href="../benchmarks/"><span class="glyphicon glyphicon-wrench"></span> Benchmarks</a></li>
+<li><a href="../gallery/"><span class="glyphicon glyphicon-book"></span> Gallery</a></li>
+<li><a href="../new/"><span class="glyphicon glyphicon-cog"></span> What's new</a></li>
+</ul>
+<ul class="nav navbar-nav navbar-right">
+<li class="dropdown">
+<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-question-sign"></span> How to<span class="caret"></span></a>
+<ul class="dropdown-menu" aria-labelledby="docs">
+<li><a href="../get-involved/">Get involved</a></li>
+</ul>
+</li>
+<li><a href="../notes/">Release Notes</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<!-- learn-by-example/index.html -->
+<!-- ACTUAL CONTENT STARTS HERE -->
+<div class='container bs-docs-container'>
+<div class='row'>
+<div class='col-md-9'>
+<p class='leadtop'> This section for the most part contains selected topics from <code4>example(data.table)</code4> to illustrate the most common data manipulation operations using `data.table`. </p>
+<div id='prior-reading' class='bs-callout bs-callout-warning'>
+<p > This section assumes (and to some extent requires) that you have already read through the [quick introduction guide]() and the [Beginner's FAQ]() section. </p>
+</div>
+# Basics {#basics .page-header}
+
+<p class='lead'> Let's start by looking at different ways of creating a `data.table`. </p>
+<div class='bs-docs-section'>
+### Creation {#creation}
+
+<p > Some ways of accomplishing this have been already mentioned in the [Quick introduction guide](). But for completeness, we'll cover it again. </p>
+<ul class='nav nav-tabs' style='margin-bottom:15px'>
+<li class='active'> <a href="#dt_create1" data-toggle="tab"><code2>data.table()</code2></a></li>
+<li  > <a href="#dt_create2" data-toggle="tab"><code2>as.data.table()</code2></a></li>
+<li  > <a href="#dt_create3" data-toggle="tab"><code2>setDT()</code2></a></li>
+</ul>
+<div id='creating-a-data-table-navtabs' class='tab-content'>
+<div class='tab-pane fade active in' id='dt_create1'>
+<p > We can create a `data.table` using the <code4>data.table()</code4> function: </p>
+```{.r}
+# creation of a data.frame
+DF <- data.frame(x=1:2, y=letters[1:2], stringsAsFactors=FALSE)
+DF
+#   x y
+# 1 1 a
+# 2 2 b
+
+# creation of a data.table
+DT <- data.table(x=1:2, y=letters[1:2])
+DT
+#    x y
+# 1: 1 a
+# 2: 2 b
+```
+<div id='strings-as-factors' class='bs-callout bs-callout-info'>
+<p > <span class="text-info"><span class='glyphicon glyphicon-info-sign'></span> </span> Note that we dint have to use `stringsAsFactors=FALSE` during the creation of `data.table`. This is because, since **v1.8.0**<span class='text-danger'></span>, `data.table` **does not** convert `character` to `factor`, by default. </p>
+</div>
+</div>
+<div class='tab-pane fade' id='dt_create2'>
+<p > Similar to <code4>as.data.frame()</code4>, <code4>as.data.table()</code4> methods also exist to convert other objects to `data.table`. </p>
+```{.r}
+methods(as.data.table)
+#  [1] as.data.table.character*  as.data.table.data.frame* as.data.table.data.table* as.data.table.Date*      
+#  [5] as.data.table.factor*     as.data.table.integer*    as.data.table.list*       as.data.table.logical*   
+#  [9] as.data.table.matrix*     as.data.table.numeric*    as.data.table.ordered*    as.data.table.table*     
+#
+#    Non-visible functions are asterisked
+
+# convert the data.frame DF to data.table
+DF <- data.frame(x=1:2, y=letters[1:2], stringsAsFactors=FALSE)
+DT <- as.data.table(DF)
+DT
+#    x y
+# 1: 1 a
+# 2: 2 b
+```
+<p > It's better to use <code4>as.data.table()</code4> wherever possible because it has lesser overhead compared to <code4>data.table()</code4> and is therefore likely to be faster. </p>
+</div>
+<div class='tab-pane fade' id='dt_create3'>
+<p > From<span class='text-danger'> **v1.9.0**</span>, following [a post on SO](http://stackoverflow.com/questions/20345022/convert-a-data-frame-to-a-data-table-without-copy), <code4>setDT()</code4> was implemented which accepts a `list`, `data.frame`  or `data.table` and converts it into a `data.table` **by reference** - no copy is being made at all. </p>
+```{.r}
+dat <- data.frame(x=1:2, y=3:4)
+setDT(dat) # now a data.atable
+dat
+#    x y
+# 1: 1 3
+# 2: 2 4
+```
+<p > This conversion, since does no copying, will be instant - especially handy when working with *very large* objects. </p>
+</div>
+</div>
+</div>
+<div class='bs-docs-section'>
+<!-- something about the previous section removes the id info in pandoc.. maybe a bug? -->
+<h3 id="subset-rows">Subset on rows</h3> 
+<p > `data.table` syntax, in its general form, can be summarised as: <code4>DT[i, j, by]</code4>. This is where most of the magic happens. In this section - row subset, we'll be looking at <code4>i</code4>. </p>
+<p > <code4>i</code4> can be `integer`, `logical`, `character` vector, `expression` (usually of column names), a `list` or another `data.table`. We'll consider each one of these cases with examples. </p>
+<ul class='nav nav-tabs' style='margin-bottom:15px'>
+<li class='active'> <a href="#subset-integer" data-toggle="tab">integer</a></li>
+<li  > <a href="#subset-logical" data-toggle="tab">logical</a></li>
+<li  > <a href="#subset-character" data-toggle="tab">character</a></li>
+<li  > <a href="#subset-expression" data-toggle="tab">expression</a></li>
+<li  > <a href="#subset-list" data-toggle="tab">list</a></li>
+<li  > <a href="#subset-data-table" data-toggle="tab">Another data.table</a></li>
+</ul>
+<div id='creating-a-data-table-navtabs' class='tab-content'>
+<div class='tab-pane fade active in' id='subset-integer'>
+This is perhaps the simplest case. The functionality is identical to that of a `data.frame`. 
+```{.r}
+DT <- data.table(x=rep(1:2, 3L), y=10:15)
+DT[1:2, ]
+#    x  y
+# 1: 1 10
+# 2: 2 11
+```
+<p > The `,` is optinal here. `DT[1:2]` would work just fine. </p>
+</div>
+<div class='tab-pane fade' id='subset-logical'>
+#### Expression that evaluates to a logical vector:
+
+It is often the case that we require to subset rows that satisfy a particular condition. We can accomplish this as follows:
+```{.r}
+DT <- data.table(x=rep(1:2, 3L), y=10:15)
+DT[x > 1L]
+#    x  y
+# 1: 2 11
+# 2: 2 13
+# 3: 2 15
+```
+<p > Note that we did not have use the <code4>\$</code4> symbol, as we used to do in `data.frames`: `DF[DF$x > 1L, ]`. You should already be familiar from [Beginner's FAQ #]() that `data.table`'s <code4>i</code4> sees column names as variables. This allows for a convenient and clutter-free syntax. </p>
+<p > This functionality is similar to base's <code4>with()</code4> based subset on a `data.frame`: `DF[with(DF, x > 1L), ]`, except that `data.table` simplifies this one step further removing the requirement for wrapping with <code4>with()</code4>. </p>
+</div>
+</div>
+</div>
+<!-- bs-docs-section -->
+<div class='bs-docs-section'>
+<h3 id="subset-columns">Subset on columns</h3>
+</div>
+</div>
+<!-- col-md-9 -->
+<!-- Right hand side -->
+<div class='col-md-3'>
+<div class='bs-sidebar hidden-print' role='complementary'>
+<ul class='nav bs-sidenav'>
+<li  > [Basics](#basics)
+<ul class='nav'>
+<li  > [Creation](#creation)</li>
+<li  > [Subset on rows](#subset-rows)</li>
+<li  > [Subset on columns](#subset-columns)</li>
+</ul>
+</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!-- FOOTER - YOU WOULDNT HAVE TO MODIFY THIS PART -->
+<footer class="bs-footer" role="contentinfo">
+<div class="container">
+<iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=watch&count=true"
+allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+<iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=fork&count=true"
+allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
+<div class="footer-links">
+<ul class="footer-links muted">
+<p>Designed using <a href="http://getbootstrap.com">Bootstrap</a> and styled with <a href="http://bootswatch.com/">Bootswatch</a> using <a href="http://bootswatch.com/cerulean">Cerulean</a> theme.</p>
+<li>Version 1.9.2</li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table">Homepage</a></li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table/graphs/contributors">Contributors</a></li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table/issues?direction=desc&labels=bug&sort=updated&state=open">Issues</a></li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table/issues?direction=desc&labels=feature+request&page=1&sort=updated&state=open">Feature Requests</a></li>
+<li>&middot;</li>
+<li><a href="https://r-forge.r-project.org/mail/?group_id=240">Mailing list</a></li>
+<li>&middot;</li>
+<li><a href="http://stackoverflow.com/questions/tagged/r+data.table">Stackoverflow tag</a></li>
+<span class="pull-right"><a href="#top">Back to top</a></span>
+</ul>
+</footer>
+<script src="https://code.jquery.com/jquery.js"></script>
+<script src="../js/waypoints.js"></script>
+<script src="../js/bootstrap.min.js"></script>
+<script src="../js/docs.min.js"></script>
+<!-- Start of StatCounter Code -->
+<script type="text/javascript">
+var sc_project=6237851;
+var sc_invisible=1;
+var sc_security="518c93ca";
+</script>
+<script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
+<noscript>
+<div class="statcounter">
+<a title="tumblr stats" href="http://statcounter.com/tumblr/" >
+<img class="statcounter" src="http://c.statcounter.com/6237851/0/518c93ca/1/" alt="tumblr stats" ></a>
+</div>
+</noscript>
+<!-- End of StatCounter Code -->
