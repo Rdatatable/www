@@ -143,6 +143,32 @@ ul_end <- function(dt) {
     return(invisible(dt))
 }
 
+ol_start <- function(x) {
+    ix = grep("^[ ]*[.]ol[ ]*[{]", x$lines)
+    if (!length(ix)) return(invisible(x))
+
+    y = gsub("^.*?[{](.*)[}][ ]*$", "\\1", x$lines[ix]) # collect everything inside {}
+    y = gsub("[ ]*=[ ]*", "=", y)                       # take are of "val = bla" -> "val=bla"
+    y = gsub("^[ ]+", "", y)                            # remove spaces at the beginning
+    y = gsub("[ ]+$", "", y)                            # remove spaces at the end
+
+    ys  = strsplit(y, "[ ]+")                           # now split on bunch of spaces
+    len = vapply(ys, length, 0L)
+    dt = setDT(list(id=rep(seq_along(len), len), elements=unlist(ys)))
+
+    gather_class(dt)
+    gather_role(dt)
+    gather_named(dt)
+    gather_id(dt)
+    x[(ix), lines := if ("attribute" %chin% names(dt)) stitch_div(dt, "ol") else "<ol>"]
+    invisible(x)
+}
+
+ol_end <- function(dt) {
+    dt[grep("^[ ]*[.]ol[ ]*$", lines), lines := "</ol>"]
+    return(invisible(dt))
+}
+
 li_start <- function(x) {
     ix = grep("^[ ]*[.]li[ ]*[{]", x$lines)
     if (!length(ix)) return(invisible(x))
@@ -210,9 +236,11 @@ parser <- function(in_file, out_file) {
     span_inline(dt)
     div_end(dt)
     ul_end(dt)
+    ol_end(dt)
     li_end(dt)
     span_end(dt)
     ul_start(dt)
+    ol_start(dt)
     li_start(dt)
     span_start(dt)
     div_start(dt)

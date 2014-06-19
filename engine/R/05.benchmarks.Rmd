@@ -1,0 +1,1551 @@
+<!-- <body> -->
+<!-- Master nav - DO NOT TOUCH-->
+<header>
+<div class="navbar-default">
+<button class="navbar-toggle" type="button" data-toggle="collapse" data-target="#navbar-main">
+<span class="sr-only">Toggle navigation</span>
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+<span class="icon-bar"></span>
+</button>
+<nav class="collapse navbar-collapse bs-navbar-collapse" role="navigation">
+<ul class="nav navbar-nav">
+<li><a href="../"><span class="glyphicon glyphicon-home"></span> data.table</a>
+</li>
+</ul>
+<ul class="nav navbar-nav navbar-left">
+<li class="dropdown">
+<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-pencil"></span> Get started <span class="caret"></span></a>
+<ul class="dropdown-menu" aria-labelledby="docs">
+<li><a href="../about/">data.table project</a></li>
+<li><a href="../intro/">Quick Introduction</a></li>
+<li><a href="./">Learn with example</a></li>
+<li><a href="../faq/">FAQs</a></li>
+</ul>
+</li>
+<li><a href="../benchmarks/"><span class="glyphicon glyphicon-wrench"></span> Benchmarks</a></li>
+<li><a href="../gallery/"><span class="glyphicon glyphicon-book"></span> Gallery</a></li>
+<li><a href="../new/"><span class="glyphicon glyphicon-cog"></span> What's new</a></li>
+</ul>
+<ul class="nav navbar-nav navbar-right">
+<li class="dropdown">
+<a class="dropdown-toggle" data-toggle="dropdown" href="#" id="docs"><span class="glyphicon glyphicon-question-sign"></span> How to<span class="caret"></span></a>
+<ul class="dropdown-menu" aria-labelledby="docs">
+<li><a href="../get-involved/">Get involved</a></li>
+</ul>
+</li>
+<li><a href="../notes/">Release Notes</a></li>
+</ul>
+</nav>
+</div>
+</header>
+<!--body-->
+<div class='container bs-docs-container'>
+<div class='row'>
+<div class='col-md-9' role='main'>
+<!-- Introduction -->
+<div class='bs-docs-section'>
+<h1 id="introduction" class="page-header">Benchmarks</h1>
+<p > This page follows up on an [earlier note](http://arunsrinivasan.github.io/dplyr_benchmark/) where we proposed we would provide a range of benchmarks on large data comparing `data.table` to `dplyr`. Here we test here on **1,000 times larger** data: **half a billion rows** by **six columns** (`~13GB`). We still consider 13GB fairly small but it should be big enough to make inferences that hold with even larger data; e.g., some users already have much larger `data.table`s on machines with over 200GB RAM. </p>
+<div class='bs-callout bs-callout-info' id='datatable-row-limit'>
+<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> Note that `data.table` is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
+</div>
+<h1 id="data-manipulation" class="page-header">Data manipulation</h1>
+<p > We'll first begin by comparing the most common data manipulation operations between `data.table` and `dplyr`. For grouped operations, `dplyr` provides a function <code4>group_by()</code4> to be combined with dplyr's verbs, to perform operations on each group. We'll compare performance both with and without grouping wherever possible. </p>
+<div class='bs-callout bs-callout-info' id='summarise-box-01'>
+#### To compare performance, we will:
+
+<ol>
+<li> Group by various combinations of three out of the six columns (<code>id1</code>, <code>id2</code> and <code>id3</code>). .li
+<li> Test with **a)** few groups (100) and **b)** many groups (100, 000).</li>
+<li> Test grouping on various types (character, integer and numeric).</li>
+</ol>
+<p > <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are the **minimum of three consecutive runs**. Remember, these are large data benchmarks; they necessarily take a long time to run (many minutes for a single run, typically). </p>
+</div>
+<div class='bs-docs-section'>
+<div class='panel-group' id='accordion'>
+<div class='panel panel-default'>
+<div class='panel-heading'>
+<h4 class="panel-title"><a data-toggle="collapse" data-parent="#accordion" href="#summarise-functions"><span class="glyphicon glyphicon-collapse-down"></span> Here are the functions to generate the test data:</a></h4>
+</div>
+<div id='summarise-functions' class='panel-collapse collapse'>
+<div class='panel-body'>
+<div class='highlight'>
+```{.r}
+# setup data
+require(data.table) # v1.9.3
+require(dplyr)      # v0.2
+# For data.table
+getDT <- function(n, k) {
+    set.seed(45L)
+    DT = data.table(id1 = sample(paste0("id", 1:k), n, TRUE), 
+             id2 = sample(1e2, n, TRUE), 
+             id3 = as.numeric(sample(10, n, TRUE)), 
+             v1 = sample(5, n, TRUE), 
+             v2 = sample(4, n, TRUE), 
+             v3 = sample(4, n, TRUE))
+}
+# For dplyr
+getDF <- function(n, k) {
+    DF = tbl_df(as.data.frame(getDT(n, k)))
+}
+```
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Grouping -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="grouping">Grouping</h2>
+<p > We'll consider aggregation/grouping operations in this section. The equivalent function for `dplyr` is <code4>summarise()</code4>, which summarises each group into a single row. Alternatively, <code4>summarise_each()</code4> is used to summarise multiple columns. </p>
+<div class='bs-callout bs-callout-info' id='summarise-box-02'>
+<h4><span class="glyphicon glyphicon-cog"></span> New optimisations in 1.9 - GForce</h4>
+<p > From <code4>1.9.0</code4>, `data.table` also provides *much faster* optimised methods for **common grouping** operations like <code4>sum</code4>, <code4>mean</code4> etc. See <code>?GForce</code> or alternatively check out the <a href="../new/#GForce">What's new#GForce</a> section. </p>
+</div>
+<!-- summarise summarise -->
+<h4 id="summarise_summarise">Benchmark summary</h4>
+<div class='bs-example table-responsive'>
+<!-- no parser for table unfortunately-->
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Get data</th>
+<th>data.table and dplyr summary functions</th>
+<th>Package</th>
+<th>Time elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1, 100 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, lapply(.SD, sum), by=id1, .SDcols=4:6]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>19.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1) %\>%</p>
+<p class="lead2">summarise_each(., funs(sum), vars=4:6)</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>38.2s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1, 100,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e5L)</p>
+<p class="lead2">DF = getDF(5e8, 1e5L)</p>
+</span>                                                        
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, lapply(.SD, sum), by=id1, .SDcols=4:6]</p>
+</span>                                                        
+</td>
+<td>**data.table**</td>
+<td>70.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1) %\>%</p>
+<p class="lead2">summarise_each(., funs(sum), vars=4:6)</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>148.3s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1,id2, 10,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2L)</p>
+<p class="lead2">DF = getDF(5e8, 1e2L)</p>
+</span>                                                        
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, lapply(.SD, sum), by="id1,id2", .SDcols=4:6]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>39.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1, id2) %\>%</p>
+<p class="lead2">summarise_each(., funs(sum), vars=4:6)</p>
+</span>                                                        
+</td>
+<td>dplyr</td>
+<td>89.6s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1,id2,id3, 100,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2L)</p>
+<p class="lead2">DF = getDF(5e8, 1e2L)</p>
+</span>                                                        
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, lapply(.SD, sum), by="id1,id2,id3", .SDcols=4:6]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>81.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1, id2, id3) %\>%</p>
+<p class="lead2">summarise_each(., funs(sum), vars=4:6)</p>
+</span>                                                        
+</td>
+<td>dplyr</td>
+<td>209.9s</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='bs-callout bs-callout-warning' id='summarise-box-03'>
+<h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~2-2.5x faster than dplyr:</h4>
+<p > `data.table` is approximately 2-2.5x faster than `dplyr` summarising on this large dataset. `dplyr` optimises <code>sum</code> through hybrid evaluation whereas `data.table` optimises through GForce. </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Ordering -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="ordering">Ordering</h2>
+<p > From versions <code4>1.9.3+</code4>, `data.table` optimises <code4>DT[order(.)]</code4> internally to use `data.table`'s fast ordering instead of <code4>base:::order()</code4> and is therefore really fast. This behaves exactly like base's order in that it also accepts expressions, ex: `DT[order(V1-V2)]`. We'll compare it against `dplyr`'s equivalent <code4>arrange()</code4>. </p>
+<!-- Arrange without grouping -->
+<h4 id="summarise_arrange">Benchmark summary</h4>
+<p > We'll benchmark the time taken to reorder the entire `data.frame` or `data.table` based on some random combinations of columns. The dataset will remain the same throughout this section. </p>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Get data</th>
+<th>Order by</th>
+<th>data.table and dplyr arrange functions</th>
+<th>Package</th>
+<th>Time elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<span class="text-muted"># character</span>
+<p class="lead2">id1</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[order(id1)]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>114.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">arrange(DF, id1)</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>758.5s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">same as above</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<span class="text-muted"># integer</span>
+<p class="lead2">-id2</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[order(-id2)]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>113.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">arrange(DF, desc(id2))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>453.3s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">same as above</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<span class="text-muted"># numeric</span>
+<p class="lead2">-id3</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[order(-id3)]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>153.7s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">arrange(DF, desc(id3))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>641.1s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">same as above</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">id1, -id2</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[order(id1, -id2)]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>169.7s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">arrange(DF, id1, desc(id2))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>1440.7s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">same as above</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">-id3, id1, id2</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[order(-id3, id1, id2)]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>468.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">arrange(DF, desc(id3), id1, id2)</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>4539.9s</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='bs-callout bs-callout-warning' id='summarise-box-04'>
+<h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~4-10x faster than dplyr without grouping:</h4>
+<p > `data.table 1.9` implements a *much faster* radix-based ordering `integer`, `numeric`, `character`, `logical` and (recently) `integer64` types and makes available to users as <code4>setorder()</code4> and by optimising <code4>DT[order(.)]</code4> internally. </p>
+</div>
+<p > In addition, <code4>v1.9.3+</code4> implements a new function <code4>setorder()</code4> which also reorders a `data.table`, but **by reference**. It is very memory efficient compared to <code4>DT[order(.)]</code4> since no copy is being made at all. By avoiding unnecessary overheads, it is also  faster than <code4>DT[order(.)]</code4>. Check the [What's new#setorder](../new/#setorder) section for more explanation and examples. </p>
+</div>
+</div>
+</div>
+<!-- Subsetting -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="subsetting">Subsetting</h2>
+<p > Let's consider the task of obtaining all rows corresponding to <code4>max(v1)</code4> within each group. Equivalent in `dplyr` is <code4>filter()</code4>. </p>
+<!-- summarise filter -->
+<h4 id="summarise_filter">Benchmark summary (with grouping)</h4>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Data</th>
+<th>data.table and dplyr filter functions</th>
+<th>Package</th>
+<th>Time Elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1, 100 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[DT[, .I[v1 == max(v1)], by=id1]$V1]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>66.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1) %\>% filter(v1 == max(v1))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>91.6s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1, 100,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e5)</p>
+<p class="lead2">DF = getDF(5e8, 1e5)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[DT[, .I[v1 == max(v1)], by=id1]$V1]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>88.8s<span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1) %\>% filter(v1 == max(v1))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>282.0s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1,id2 10,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[DT[, .I[v1 == max(v1)], by="id1,id2"]$V1]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>117.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1,id2) %\>% filter(v1 == max(v1))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>143.2s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1,id2,id3 100,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[DT[, .I[v1 == max(v1)], by="id1,id2,id3"]$V1]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>136.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1,id2,id3) %\>% filter(v1 == max(v1))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>342.8s</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='bs-callout bs-callout-warning' id='summarise-box-05'>
+#### <span class="glyphicon glyphicon-bullhorn"></span> data.table is ~1.2x to ~3.2x faster than dplyr:
+
+<code4>.I</code4> is a special variable that holds the row number in <code4>DT</code4> for each group. Check out <code4>?data.table</code4> for more information on all special variables.
+</div>
+</div>
+</div>
+</div>
+<!-- Updating -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="updating">Updating</h2>
+<p > `dplyr` *doesn't* like modifying objects *in-place*, whereas it is a very important aspect of `data.table's` philosophy. This is also one of the major philosophical differences between the two packages. </p>
+<div class='bs-callout bs-callout-warning' id='summarise-box-06'>
+#### Design and performance trade-offs:
+
+1) **dplyr** *shallow copies* the data and then adds or modifies columns. Even though the cost to shallow copy is normally negligible, it does increase with the number of columns. [This stackoverflow post](http://stackoverflow.com/a/21704664/559784) gives an idea about the performance due to shallow copy on datasets with huge amounts of columns.
+2) When modifying existing columns, **dplyr** will have to make a **copy** of *that column* before modifying, due to its *design*. This'll affect *performance*.
+3) To our knowledge, it's **not** possible currently to modify only a subset of rows (say, based on a condition) using **dplyr** without copying that column. Checkout the [grammar#sub-assignment-by-reference](../grammar/#sub-assign-by-reference) section for more information on this topic.
+</div>
+<p > Here, we'll only consider <code4>mutate()</code4> to `data.table`'s <code4>:=</code4> (or equivalently <code4>set()</code4>) in creating new columns, while grouping. The task we consider is quite simple and straightforward. For each group, normalise all non-grouping columns by that groups's <code4>max</code4> value. To keep the benchmarks fair, the newly created columns for `data.table` are removed each time before running again (code not shown). </p>
+<!-- grouped mutate -->
+<h4 id="summarise_filter">Benchmark summary (with grouping)</h4>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Data</th>
+<th>data.table and dplyr filter functions</th>
+<th>Package</th>
+<th>Time Elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1, 100 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = id1]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>20.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1) %\>% mutate(v4 = v1/max(v1)) </p>
+</span>
+</td>
+<td>dplyr</td>
+<td>36.0s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1, 100,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e5)</p>
+<p class="lead2">DF = getDF(5e8, 1e5)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = id1]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>96.6s<span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1) %\>% mutate(v4 = v1/max(v1)) </p>
+</span>
+</td>
+<td>dplyr</td>
+<td>146.1s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1,id2 10,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = "id1,id2"]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>50.3s<span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1,id2) %\>% mutate(v4 = v1/max(v1)) </p>
+</span>
+</td>
+<td>dplyr</td>
+<td>88.6s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-muted"># id1,id2,id3 100,000 groups</span>
+<span class="text-mono">
+<p class="lead2">DT = getDT(5e8, 1e2)</p>
+<p class="lead2">DF = getDF(5e8, 1e2)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = "id1,id2,id3"]</p>
+</span>
+</td>
+<td>**data.table**</td>
+<td>101.3s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF %\>% group_by(id1,id2,id3) %\>% mutate(v4=v1/max(v1))</p>
+</span>
+</td>
+<td>dplyr</td>
+<td>204.8s</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class="bs-callout bs-callout-warning" id="summarisef-box-07">
+<h4><span class="glyphicon glyphicon-bullhorn"></span> data.table is ~1.5x to ~2.25x faster than dplyr:</h4>
+Once again, `data.table` turns out faster.
+</div>
+</div>
+</div>
+</div>
+<!-- Conclusion -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="verbs-conclusion">Conclusion</h2>
+<p class='lead'> Yet to be done... </p>
+</div>
+</div>
+</div>
+<!-- joins -->
+<div class='bs-docs-section'>
+<h1 id="joins" class="page-header">vs dplyr Joins</h1>
+<p class='lead'> In this section, we'll benchmark `data.table` <code4>joins</code4> against `dplyr`'s. For now, We'll consider only <code4>left join</code4> for now. We will update with the other joins soon. </p>
+<div class='bs-callout bs-callout-info' id='joins-box-01'>
+<h4>To compare performance, we will:</h4>
+<ol>
+<li> Construct a large `data.table` - **5e8 rows** and **five columns** and another `data.table` which contains the unique values from the first `data.table` based on the columns to join by.</li>
+<li> Generate two different data sets - one with relatively **less** unique groupings (~100-1000) and the other **many** groups (~100,000).</li>
+<li> Also test the performance of joins on **multiple columns**. .li
+</ol>
+<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
+</div>
+<p > The functions required to generate these large datasets (mentioned above) for both `data.table` and `dplyr` cases are shown below. Click on the box below to collapse and reveal the code. </p>
+<div class='panel-group' id='accordion'>
+<div class='panel panel-default'>
+<div class='panel-heading'>
+<h4 class="panel-title"><a data-toggle="collapse" data-parent="#accordion" href="#joins-functions"><span class="glyphicon glyphicon-collapse-down"></span> Here are the functions to generate the required data:</a></h4>
+</div>
+<div id='joins-functions' class='panel-collapse collapse'>
+<div class='panel-body'>
+<div class='highlight'>
+```{.r}
+# setup data
+#require(data.table) # v1.9.4
+#require(dplyr)      # v0.1.2
+# For data.table
+getDTx <- function(n, k) {
+    set.seed(45L)
+    DT = data.table(id1 = sample(paste0("id", 1:k), n, TRUE), 
+    id2 = sample(-k:k, n, TRUE), 
+    id3 = as.numeric(sample(-k:k, n, TRUE)), 
+    v1 = sample(5, n, TRUE), 
+    v2 = sample(4, n, TRUE))
+}
+getDTy <- function(DT, by) unique(DT, by=by)[, by, with=FALSE]
+# For dplyr
+getDFx <- function(n, k) {
+    DF = tbl_df(as.data.frame(getDTx(n, k)))
+}
+getDFy <- function(DT, by) as.data.frame(getDTy(DT, by))
+```
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<!-- Left join -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="left">Left join</h2>
+<!-- summarise summarise -->
+<h4 id="join_left">Benchmark summary</h4>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Data</th>
+<th>Join cols + groups</th>
+<th>data.table and dplyr functions</th>
+<th>Package</th>
+<th>Time elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DTx = getDTx(5e8, 100)</p>
+<p class="lead2">DFx = getDFx(5e8, 100)</p>
+<p class="lead2">DTy = getDTy(DTx, "id1")</p>
+<p class="lead2">DFy = getDFy(DTx, "id1")</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono" align="center">
+<p class="lead2">id1</p>
+<p class="lead2">100</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">setkeyv(DTx, "id1")</p>
+<p class="lead2">setkeyv(DTy, "id1")</p>
+<p class="lead2">DTx[DTy]</p>
+</span>                                                        
+</td>
+<td>**data.table**</td>
+<td>84.7s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">left_join(DFy, DFx, by="id1")</span>
+</td>
+<td>dplyr</td>
+<td>130.3s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DTy = getDTy(DTx, "id2")</p>
+<p class="lead2">DFy = getDFy(DTx, "id2")</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono" align="center">
+<p class="lead2">id2</p>
+<p class="lead2">200</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">setkeyv(DTx, "id2")</p>
+<p class="lead2">setkeyv(DTy, "id2")</p>
+<p class="lead2">DTx[DTy]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>91.5s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">left_join(DFy, DFx, by="id2")</span>
+</td>
+<td>dplyr</td>
+<td>142.6s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DTy = getDTy(DTx, "id3")</p>
+<p class="lead2">DFy = getDFy(DTx, "id3")</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono" align="center">
+<p class="lead2">id3</p>
+<p class="lead2">200</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">setkeyv(DTx, "id3")</p>
+<p class="lead2">setkeyv(DTy, "id3")</p>
+<p class="lead2">DTx[DTy]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>147.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">left_join(DFy, DFx, by="id3")</span>
+</td>
+<td>dplyr</td>
+<td>159.8s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">byv = c("id1", "id2")</p>
+<p class="lead2">DTy = getDTy(DTx, byv)</p>
+<p class="lead2">DFy = getDFy(DTx, byv)</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono" align="center">
+<p class="lead2">id1,id2</p>
+<p class="lead2">20,000</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">setkeyv(DTx, byv)</p>
+<p class="lead2">setkeyv(DTy, byv)</p>
+<p class="lead2">DTx[DTy]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>159.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">left_join(DFy, DFx, by=byv)</span>
+</td>
+<td>dplyr</td>
+<td>200.9s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">byv = c("id1", "id2", "id3")</p>
+<p class="lead2">DTx = getDTx(5e8, 10)</p>
+<p class="lead2">DFx = getDFx(5e8, 10)</p>
+<p class="lead2">DTy = getDTy(DTx, byv)</p>
+<p class="lead2">DFy = getDFy(DTx, byv)</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono" align="center">
+<p class="lead2">id1,id2,id3</p>
+<p class="lead2">~4,000</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">setkeyv(DTx, byv)</p>
+<p class="lead2">setkeyv(DTy, byv)</p>
+<p class="lead2">DTx[DTy]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>188.5s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">left_join(DFy, DFx, by=byv)</span>
+</td>
+<td>dplyr</td>
+<td>252.5s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">byv = c("id1", "id2", "id3")</p>
+<p class="lead2">DTx = getDTx(5e8, 30)</p>
+<p class="lead2">DFx = getDFx(5e8, 30)</p>
+<p class="lead2">DTy = getDTy(DTx, byv)</p>
+<p class="lead2">DFy = getDFy(DTx, byv)</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono" align="center">
+<p class="lead2">id1,id2,id3</p>
+<p class="lead2">~100,000</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">setkeyv(DTx, byv)</p>
+<p class="lead2">setkeyv(DTy, byv)</p>
+<p class="lead2">DTx[DTy]</p>
+</span>                                                                                                                
+</td>
+<td>**data.table**</td>
+<td>252.8s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">left_join(DFy, DFx, by=byv)</span>
+</td>
+<td>dplyr</td>
+<td>720.1s</td>
+</tr>
+</tbody>
+</table> <!-- table -->
+</div>
+<div class='bs-callout bs-callout-warning' id='joins-box-02'>
+<h4><span class="glyphicon glyphicon-bullhorn"></span> data.table's left join is ~1.1-2.8x faster than dplyr:</h4>
+<p > `data.tabe` uses [binary search](../new/#binary-search) based approach for joins, where as `dplyr` uses hash tables. `data.table`'s choice of algorithm is deliberate because it also has [fast prevailing orderd joins](../grammar#rolling-joins) (<code4>roll=TRUE</code4>), a.k.a last observation carried forward, in mind. This additional functionality, which `dplyr` doesn't have currently, comes as a natural extension due to binary search based joins without compromising in speed. </p>
+</div>
+</div>
+</div>
+</div>
+<!-- Conclusion -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="joins-conclusion">Conclusion</h2>
+<p class='lead'> Yet to be done... </p>
+</div>
+</div>
+</div>
+<!-- left join -->                        
+<!-- melt -->
+<div class='bs-docs-section'>
+<h1 id="reshape" class="page-header">vs Reshape</h1>
+<p class='lead'> `data.table 1.9` imports the package <code4>reshape2</code4> and implements `data.table` specific methods for  both <code4>melt</code4> and <code4>dcast</code4> in <code>C</code>. It's both fast and memory efficient. We'll compare them here to with `reshape2`'s respective methods. </p>
+<div class='bs-callout bs-callout-info' id='reshape-box-01'>
+<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
+</div>
+<h2 id="melt">Melt</h2>
+<p > Let's setup functions to generate data first. </p>
+```{.r}
+# setup data
+require(data.table) # 1.9.4
+require(reshape2)
+getDT <- function(n) {
+    set.seed(45L)
+    DT <- data.table(x = sample(letters, n, TRUE), y = sample(LETTERS, n, TRUE),
+    za = rnorm(n), zb = rnorm(n), zc = as.numeric(sample(c(NA,1:5), n, TRUE)))
+}
+getDF <- function(n) as.data.frame(getDT(n))
+```
+</div>
+<p > We'll benchmark on <code4>1e8 rows</code4>. Also, we'll compare <code4>melt</code4> with and without the argument <code4>na.rm</code4>. </p>
+<div class='bs-callout bs-callout-info' id='reshape-box-02'>
+<h4><span class="glyphicon glyphicon-cog"></span> New optimisations to reshape2's melt:</h4>
+<p > Kevin Ushey has recently added a [C++](https://github.com/hadley/reshape/pull/39) version of <code4>melt</code4> to the `reshape2` package. At the time of writing, it's still not available on CRAN. We'll benchmark both <code4>melt</code4> from CRAN version 1.2.2 and the new `C++` version (commit 148). </p>
+</div>
+<!-- melt table -->
+<h4 id="reshape_melt">Benchmark summary</h4>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Data</th>
+<th>data.table and reshape2's melt functions</th>
+<th>Package</th>
+<th>Time Elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DT = getDT(1e8)</p>
+<p class="lead2">DF = getDF(1e8)</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">melt(DT, id=1:2) </p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>6.5s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">melt(DF, id=1:2)</p>
+</span>
+</td>
+<td>reshape2 - CRAN</td>
+<td>457.1s</td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">melt(DF, id=1:2)</p>
+</span>
+</td>
+<td>reshape2 - new <span class="text-mono">C++</span></td>
+<td>9.1s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">melt(DT, id=1:2, na.rm=TRUE) </p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>8.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">melt(DF, id=1:2, na.rm=TRUE) </p>
+</span>
+</td>
+<td>reshape2 - CRAN</td>
+<td>1090.9s</td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">melt(DF, id=1:2, na.rm=TRUE) </p>
+</span>
+</td>
+<td>reshape2 - new <span class="text-mono">C++</span></td>
+<td>109.3s</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='bs-callout bs-callout-warning' id='reshape-box-03'>
+<h4><span class="glyphicon glyphicon-bullhorn"></span> melt.data.table is ~1.4x and ~13.5x faster than reshape2's C++ version of melt </h4>
+<p > Note that <code4>melt.data.table</code4> also takes care of removing <code4>NA</code4> (when <code4>na.rm=TRUE</code4>) efficiently from within `C`, as opposed to the new `C++` implementation, as is evident from the runtime. </p>
+</div>
+<!-- .div -->
+<!-- dcast -->
+<div class='bs-docs-section'>
+<h2 id="dcast">Cast</h2>
+<p > The `dcast` function from the `reshape2` package is not a S3 generic yet. Therefore for the moment, we'll have to use the function as <code4>dcast.data.table</code4>. All arguments except for <code>margins</code> is implemented. </p>
+```{.r}
+# setup data
+require(data.table) # 1.9.4
+require(reshape2)
+getDT <- function(n) {
+    set.seed(45L)
+    DT <- data.table(aa = sample(1e2, n, TRUE), bb = sample(1e3, n, TRUE), 
+    cc = sample(letters, n, TRUE), dd = runif(n))
+}
+getDF <- function(n) as.data.frame(getDT(n))
+```
+</div>
+<p > Let's benchmark on <code4>1e8 rows</code4>. Columns <code4>aa</code4> and <code4>bb</code4> both have 1e2 and 1e3 unique values each. </p>
+<!-- dcast table -->
+<h4 id="reshape_dcast">Benchmark summary</h4>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Data</th>
+<th>Groups</th>
+<th>data.table and reshape2's melt functions</th>
+<th>Package</th>
+<th>Time Elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DT = getDT(1e8)</p>
+<p class="lead2">DF = getDF(1e8)</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">100</td>
+<td>
+<span class="text-mono">
+<p class="lead2">dcast.data.table(DT, aa ~ cc, fun=sum)</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>6.9s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">reshape2:::dcast(DF, aa ~ cc, fun=sum)</p>
+</span>
+</td>
+<td>reshape2</td>
+<td>45.2s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">1,000</td>
+<td>
+<span class="text-mono">
+<p class="lead2">dcast.data.table(DT, bb ~ cc, fun=sum)</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>9.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">reshape2:::dcast(DF, bb ~ cc, fun=sum)</p>
+</span>
+</td>
+<td>reshape2</td>
+<td>48.4s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">100,000</td>
+<td>
+<span class="text-mono">
+<p class="lead2">dcast.data.table(DT, aa + bb ~ cc, fun=sum)</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>20.0s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">reshape2:::dcast(DF, aa + bb ~ cc, fun=sum)</p>
+</span>
+</td>
+<td>reshape2</td>
+<td>144.2</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='bs-callout bs-callout-warning' id='reshape-box-04'>
+<h4><span class="glyphicon glyphicon-bullhorn"></span> dcast.data.table is ~5-7x faster than reshape2:::dcast</h4>
+<p > <code4>dcast.data.table</code4> takes advantage of `data.table's` fast ordering, grouping, internal optimisations and binary search for drastic speed-ups. This is also the main reason why reshaping was implemented within `data.table` as opposed to making a pull request to `reshape2`. </p>
+</div>
+<!-- Conclusion -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="reshape-conclusion">Conclusion</h2>
+<p > Yet to be done.. </p>
+</div>
+</div>
+</div>
+<div class='bs-docs-section'>
+<h1 id="baseR" class="page-header">vs base R</h1>
+<p class='lead'> base R's <code4>unique()</code4> as well as <code4>duplicated()</code4> are a very efficient and extremely fast, when operated on vectors. However their `data.frame` methods aren't as efficient and tends to get very slow on relatively large data sizes. In this section, we'd like to highlight the performance gains of these methods implemented in `data.table`. </p>
+<div class='bs-callout bs-callout-info' id='baseR-box-01'>
+<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
+</div>
+<p > Let's create a data set with **1e8 rows** and three columns. We'll compare <code4>unique()</code4> alone on `data.table` and `data.frame` over certain column combinations. Here are the functions to generate the data: </p>
+```{.r}
+# For data.table
+getDT <- function(n) {
+    data.table(x=sample(100, n, TRUE), 
+    y=sample(paste("id", 1:100, sep=""), n, TRUE), 
+    z=as.numeric(sample(-100:100, n, TRUE)))
+}
+# For dplyr
+getDF <- function(n) as.data.frame(getDT(n))
+```
+</div>
+<h2 id="unique">Unique</h2>
+<!-- unique table -->
+<h4 id="unique_base">Benchmark summary</h4>
+<div class='bs-example table-responsive'>
+<table class="table table-striped table-bordered table-hover">
+<thead>
+<tr>
+<th>Data</th>
+<th>Groups</th>
+<th>data.table and reshape2's melt functions</th>
+<th>Package</th>
+<th>Time Elapsed</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">DT = getDT(1e8)</p>
+<p class="lead2">DF = getDF(1e8)</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2"><span class="text-muted"># integer</span></p>
+<p class="lead2" align="center">x</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DT, by="x")</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>1.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF[duplicated(DF$x), ]</p>
+</span>
+</td>
+<td>base's unique</td>
+<td>22.5s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2"><span class="text-muted"># character</span></p>
+<p class="lead2" align="center">y</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DT, by="y")</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>1.4s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF[duplicated(DF$y), ]</p>
+</span>
+</td>
+<td>base's unique</td>
+<td>23.4s</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2"><span class="text-muted"># numeric</span></p>
+<p class="lead2" align="center">z</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DT, by="z")</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>9.6s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF[duplicated(DF$z), ]</p>
+</span>
+</td>
+<td>base's unique</td>
+<td>25.6</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2" align="center">x,y</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DT, by=c("x", "y"))</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>4.2s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF[duplicated(DF[, c("x", "y")]), ]</p>
+</span>
+</td>
+<td>base's unique</td>
+<td>89.6</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2" align="center">y, z</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DT, by=c("y", "z"))</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>11.1s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">DF[duplicated(DF[, c("y", "z")]), ]</p>
+</span>
+</td>
+<td>base's unique</td>
+<td>189.2</td>
+</tr>
+</tbody>
+<tbody>
+<tr>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2">same as above</p>
+</span>
+</td>
+<td rowspan="3" style="vertical-align: middle;">
+<span class="text-mono">
+<p class="lead2" align="center">x, y, z</p>
+</span>
+</td>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DT)</p>
+</span>
+</td>
+<td><strong>data.table</strong></td>
+<td>12.9s <span class="text-success"><span class="glyphicon glyphicon-ok"></span></span></td>
+</tr>
+<tr>
+<td>
+<span class="text-mono">
+<p class="lead2">unique(DF)</p>
+</span>
+</td>
+<td>base's unique</td>
+<td>261.7</td>
+</tr>
+</tbody>
+</table>
+</div>
+<div class='bs-callout bs-callout-warning' id='baseR-box-02'>
+<h4><span class="glyphicon glyphicon-bullhorn"></span> unique.data.table is ~2.5-21x faster than base's unique:</h4>
+<p > `data.table` gains drastic speed for <code4>unique</code4> and <code4>duplicated</code4> `data.table` methods once again by using the internal `forder`. </p>
+</div>
+<!-- Conclusion -->
+<div class='bs-docs-section'>
+<div class='row'>
+<div class='col-lg-12'>
+<h2 id="baseR-conclusion">Conclusion</h2>
+<p class='lead'> Yet to be done... </p>
+</div>
+</div>
+</div>
+</div>
+<!-- col-md-9-->
+<div class='col-md-3'>
+<div class='bs-sidebar hidden-print' role='complementary'>
+<ul class='nav bs-sidenav'>
+<li> [Introduction](#introduction)</li>
+<li>
+[Data manipulation](#data-manipulation)
+<ul class='nav'>
+<li> [Grouping](#grouping)</li>
+<li> [Ordering](#ordering)</li>
+<li> [Subsetting](#subsetting)</li>
+<li> [Updating](#updating)</li>
+<li> [Conclusion](#verbs-conclusion)</li>
+</ul>
+</li>
+<li>
+[joins](#joins)
+<ul class='nav'>
+<li> [Left joins](#left)</li>
+<li> [Conclusion](#joins-conclusion)</li>
+</ul>
+</li>
+<li>
+[vs Reshape](#reshape)
+<ul class='nav'>
+<li> [Melt](#melt)</li>
+<li> [Cast](#dcast)</li>
+<li> [Conclusion](#reshape-conclusion)</li>
+</ul>
+</li>
+<li>
+[vs base R](#baseR)
+<ul class='nav'>
+<li> [Unique](#unique)</li>
+<li> [Conclusion](#baseR-conclusion)</li>
+</ul>
+</li>
+<li> [Back to top](#top)</li>
+</ul>
+</div>
+</div>
+</div>
+</div>
+<!--/body-->
+<!-- FOOTER - YOU WOULDNT HAVE TO MODIFY THIS PART -->
+<footer class="bs-footer" role="contentinfo">
+<div class="container">
+<iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=watch&count=true"
+allowtransparency="true" frameborder="0" scrolling="0" width="110" height="20"></iframe>
+<iframe src="http://ghbtns.com/github-btn.html?user=Rdatatable&repo=data.table&type=fork&count=true"
+allowtransparency="true" frameborder="0" scrolling="0" width="95" height="20"></iframe>
+<div class="footer-links">
+<ul class="footer-links muted">
+<p>Designed using <a href="http://getbootstrap.com">Bootstrap</a> and styled with <a href="http://bootswatch.com/">Bootswatch</a> using <a href="http://bootswatch.com/cerulean">Cerulean</a> theme.</p>
+<li>Version 1.9.2</li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table">Homepage</a></li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table/graphs/contributors">Contributors</a></li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table/issues?direction=desc&labels=bug&sort=updated&state=open">Issues</a></li>
+<li>&middot;</li>
+<li><a href="https://github.com/Rdatatable/data.table/issues?direction=desc&labels=feature+request&page=1&sort=updated&state=open">Feature Requests</a></li>
+<li>&middot;</li>
+<li><a href="https://r-forge.r-project.org/mail/?group_id=240">Mailing list</a></li>
+<li>&middot;</li>
+<li><a href="http://stackoverflow.com/questions/tagged/r+data.table">Stackoverflow tag</a></li>
+<span class="pull-right"><a href="#top">Back to top</a></span>
+</ul>
+</footer>
+<script src="https://code.jquery.com/jquery.js"></script>
+<script src="../js/waypoints.js"></script>
+<script src="../js/bootstrap.min.js"></script>
+<script src="../js/docs.min.js"></script>
+<!-- Start of StatCounter Code -->
+<script type="text/javascript">
+var sc_project=6237851;
+var sc_invisible=1;
+var sc_security="518c93ca";
+</script>
+<script type="text/javascript" src="http://www.statcounter.com/counter/counter.js"></script>
+<noscript>
+<div class="statcounter">
+<a title="tumblr stats" href="http://statcounter.com/tumblr/" >
+<img class="statcounter" src="http://c.statcounter.com/6237851/0/518c93ca/1/" alt="tumblr stats" ></a>
+</div>
+</noscript>
+<!-- End of StatCounter Code -->

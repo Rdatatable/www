@@ -120,14 +120,14 @@ dat
 <!-- something about the previous section removes the id info in pandoc.. maybe a bug? -->
 <h3 id="subset-rows">Subset on rows</h3> 
 <p > `data.table` syntax, in its general form, can be summarised as: <code4>DT[i, j, by]</code4>. This is where most of the magic happens. In this section - row subset, we'll be looking at <code4>i</code4>. </p>
-<p > <code4>i</code4> can be `integer`, `logical`, `character` vector, `expression` (usually of column names), a `list` or another `data.table`. We'll consider each one of these cases with examples. </p>
+<p > <code4>i</code4> can be `integer`, `logical`, `character` vector, `expression` (usually of column names), a `list` or a `data.table`. We'll consider each one of these cases with examples. </p>
 <ul class='nav nav-tabs' style='margin-bottom:15px'>
 <li class='active'> <a href="#subset-integer" data-toggle="tab">integer</a></li>
 <li  > <a href="#subset-logical" data-toggle="tab">logical</a></li>
 <li  > <a href="#subset-character" data-toggle="tab">character</a></li>
 <li  > <a href="#subset-expression" data-toggle="tab">expression</a></li>
-<li  > <a href="#subset-list" data-toggle="tab">list</a></li>
-<li  > <a href="#subset-data-table" data-toggle="tab">Another data.table</a></li>
+<li  > <a href="#subset-list" data-toggle="tab">A list</a></li>
+<li  > <a href="#subset-data-table" data-toggle="tab">A data.table</a></li>
 </ul>
 <div id='creating-a-data-table-navtabs' class='tab-content'>
 <div class='tab-pane fade active in' id='subset-integer'>
@@ -155,6 +155,8 @@ DT[x > 1L]
 ```
 <p > Note that we did not have use the <code4>\$</code4> symbol, as we used to do in `data.frames`: `DF[DF$x > 1L, ]`. You should already be familiar from [Beginner's FAQ #]() that `data.table`'s <code4>i</code4> sees column names as variables. This allows for a convenient and clutter-free syntax. </p>
 <p > This functionality is similar to base's <code4>with()</code4> based subset on a `data.frame`: `DF[with(DF, x > 1L), ]`, except that `data.table` simplifies this one step further removing the requirement for wrapping with <code4>with()</code4>. </p>
+#### Using a logical vector:
+
 </div>
 </div>
 </div>

@@ -189,7 +189,7 @@ Subset on rows
 <code>data.table</code> syntax, in its general form, can be summarised as: <code4>DT[i, j, by]</code4>. This is where most of the magic happens. In this section - row subset, we’ll be looking at <code4>i</code4>.
 </p>
 <p > 
-<code4>i</code4> can be <code>integer</code>, <code>logical</code>, <code>character</code> vector, <code>expression</code> (usually of column names), a <code>list</code> or another <code>data.table</code>. We’ll consider each one of these cases with examples.
+<code4>i</code4> can be <code>integer</code>, <code>logical</code>, <code>character</code> vector, <code>expression</code> (usually of column names), a <code>list</code> or a <code>data.table</code>. We’ll consider each one of these cases with examples.
 </p>
 <ul class='nav nav-tabs' style='margin-bottom:15px'>
 <li class='active'> 
@@ -205,10 +205,10 @@ Subset on rows
 <a href="#subset-expression" data-toggle="tab">expression</a>
 </li>
 <li  > 
-<a href="#subset-list" data-toggle="tab">list</a>
+<a href="#subset-list" data-toggle="tab">A list</a>
 </li>
 <li  > 
-<a href="#subset-data-table" data-toggle="tab">Another data.table</a>
+<a href="#subset-data-table" data-toggle="tab">A data.table</a>
 </li>
 </ul>
 <div id='creating-a-data-table-navtabs' class='tab-content'>
@@ -238,6 +238,7 @@ Note that we did not have use the <code4>$</code4> symbol, as we used to do in <
 <p > 
 This functionality is similar to base’s <code4>with()</code4> based subset on a <code>data.frame</code>: <code>DF[with(DF, x &gt; 1L), ]</code>, except that <code>data.table</code> simplifies this one step further removing the requirement for wrapping with <code4>with()</code4>.
 </p>
+<h4>Using a logical vector:</h4>
 </div>
 </div>
 </div>

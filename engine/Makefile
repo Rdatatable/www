@@ -1,4 +1,4 @@
-all: parser.Rmd about.Rmd quick-intro.Rmd learn-by-example.Rmd parser.html about.html quick-intro.html learn-by-example.html
+all: parser.Rmd about.Rmd quick-intro.Rmd learn-by-example.Rmd benchmarks.Rmd parser.html about.html quick-intro.html learn-by-example.html benchmarks.html
 
 parser.Rmd: R/00.parser.md
 	Rscript -e "\
@@ -20,6 +20,11 @@ learn-by-example.Rmd: R/04.learn-by-example.md
 	source('./scripts/parser.R');\
 	parser('R/04.learn-by-example.md', 'R/04.learn-by-example.Rmd')"
 
+benchmarks.Rmd: R/05.benchmarks.md
+		Rscript -e "\
+	source('./scripts/parser.R');\
+	parser('R/05.benchmarks.md', 'R/05.benchmarks.Rmd')"
+
 parser.html: R/00.parser.Rmd
 	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../internals/index.html ./R/00.parser.Rmd
 
@@ -31,6 +36,9 @@ quick-intro.html: R/02.quick-intro.Rmd
 
 learn-by-example.html: R/04.learn-by-example.Rmd
 	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../learn-by-example/index.html ./R/04.learn-by-example.Rmd
+
+benchmarks.html: R/05.benchmarks.Rmd
+	pandoc --smart --standalone -c ../css/bootstrap.css --from markdown --to html -o ../benchmarks/index.html ./R/05.benchmarks.Rmd
 
 clean:
 	rm -f ./R/*.Rmd
