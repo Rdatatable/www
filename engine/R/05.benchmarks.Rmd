@@ -48,7 +48,8 @@
 <h1 id="introduction" class="page-header">Benchmarks</h1>
 <p > This page follows up on an [earlier note](http://arunsrinivasan.github.io/dplyr_benchmark/) where we proposed we would provide a range of benchmarks on large data comparing `data.table` to `dplyr`. Here we test here on **1,000 times larger** data: **half a billion rows** by **six columns** (`~13GB`). We still consider 13GB fairly small but it should be big enough to make inferences that hold with even larger data; e.g., some users already have much larger `data.table`s on machines with over 200GB RAM. </p>
 <div class='bs-callout bs-callout-info' id='datatable-row-limit'>
-<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> Note that `data.table` is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
+1) `data.table` is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
+2) All benchmarks timings reported are minimum of **three consecutive runs**. These are benchmarks are relatively huge data; they necessarily take a long time to run (many minutes for a single run, typically).
 </div>
 <h1 id="data-manipulation" class="page-header">Data manipulation</h1>
 <p > We'll first begin by comparing the most common data manipulation operations between `data.table` and `dplyr`. For grouped operations, `dplyr` provides a function <code4>group_by()</code4> to be combined with dplyr's verbs, to perform operations on each group. We'll compare performance both with and without grouping wherever possible. </p>
@@ -56,11 +57,10 @@
 #### To compare performance, we will:
 
 <ol>
-<li> Group by various combinations of three out of the six columns (<code>id1</code>, <code>id2</code> and <code>id3</code>). .li
+<li> Group by various combinations of three out of the six columns (<code>id1</code>, <code>id2</code> and <code>id3</code>).</li>
 <li> Test with **a)** few groups (100) and **b)** many groups (100, 000).</li>
 <li> Test grouping on various types (character, integer and numeric).</li>
 </ol>
-<p > <span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are the **minimum of three consecutive runs**. Remember, these are large data benchmarks; they necessarily take a long time to run (many minutes for a single run, typically). </p>
 </div>
 <div class='bs-docs-section'>
 <div class='panel-group' id='accordion'>
@@ -102,7 +102,7 @@ getDF <- function(n, k) {
 <div class='row'>
 <div class='col-lg-12'>
 <h2 id="grouping">Grouping</h2>
-<p > We'll consider aggregation/grouping operations in this section. The equivalent function for `dplyr` is <code4>summarise()</code4>, which summarises each group into a single row. Alternatively, <code4>summarise_each()</code4> is used to summarise multiple columns. </p>
+<p > We'll consider aggregation/grouping operations in this section. The equivalent for `dplyr` is <code4>summarise</code4>, which summarises each group into a single row. </p>
 <div class='bs-callout bs-callout-info' id='summarise-box-02'>
 <h4><span class="glyphicon glyphicon-cog"></span> New optimisations in 1.9 - GForce</h4>
 <p > From <code4>1.9.0</code4>, `data.table` also provides *much faster* optimised methods for **common grouping** operations like <code4>sum</code4>, <code4>mean</code4> etc. See <code>?GForce</code> or alternatively check out the <a href="../new/#GForce">What's new#GForce</a> section. </p>
@@ -246,7 +246,7 @@ getDF <- function(n, k) {
 <div class='row'>
 <div class='col-lg-12'>
 <h2 id="ordering">Ordering</h2>
-<p > From versions <code4>1.9.3+</code4>, `data.table` optimises <code4>DT[order(.)]</code4> internally to use `data.table`'s fast ordering instead of <code4>base:::order()</code4> and is therefore really fast. This behaves exactly like base's order in that it also accepts expressions, ex: `DT[order(V1-V2)]`. We'll compare it against `dplyr`'s equivalent <code4>arrange()</code4>. </p>
+<p > From versions <code4>1.9.3+</code4>, `data.table` optimises <code4>DT[order(.)]</code4> internally to use `data.table`'s fast ordering instead of <code4>base:::order()</code4> and is therefore really fast. This behaves exactly like base's order in that it also accepts expressions, ex: `DT[order(V1-V2)]`. We'll compare it against `dplyr`'s equivalent <code4>arrange</code4>. </p>
 <!-- Arrange without grouping -->
 <h4 id="summarise_arrange">Benchmark summary</h4>
 <p > We'll benchmark the time taken to reorder the entire `data.frame` or `data.table` based on some random combinations of columns. The dataset will remain the same throughout this section. </p>
@@ -422,7 +422,7 @@ getDF <- function(n, k) {
 <div class='row'>
 <div class='col-lg-12'>
 <h2 id="subsetting">Subsetting</h2>
-<p > Let's consider the task of obtaining all rows corresponding to <code4>max(v1)</code4> within each group. Equivalent in `dplyr` is <code4>filter()</code4>. </p>
+<p > Let's consider the task of obtaining all rows corresponding to <code4>max(v1)</code4> within each group. Equivalent in `dplyr` is <code4>filter</code4>. </p>
 <!-- summarise filter -->
 <h4 id="summarise_filter">Benchmark summary (with grouping)</h4>
 <div class='bs-example table-responsive'>
@@ -558,7 +558,7 @@ getDF <- function(n, k) {
 <div class='row'>
 <div class='col-lg-12'>
 <h2 id="updating">Updating</h2>
-<p > `dplyr` *doesn't* like modifying objects *in-place*, whereas it is a very important aspect of `data.table's` philosophy. This is also one of the major philosophical differences between the two packages. </p>
+<p > One important difference in the philosophy of `data.table` with `dplyr` is that `dplyr` *doesn't* like modifying objects *in-place*. However it is a very important aspect of `data.table's` philosophy. </p>
 <div class='bs-callout bs-callout-warning' id='summarise-box-06'>
 #### Design and performance trade-offs:
 
@@ -708,7 +708,7 @@ Once again, `data.table` turns out faster.
 <!-- joins -->
 <div class='bs-docs-section'>
 <h1 id="joins" class="page-header">vs dplyr Joins</h1>
-<p class='lead'> In this section, we'll benchmark `data.table` <code4>joins</code4> against `dplyr`'s. For now, We'll consider only <code4>left join</code4> for now. We will update with the other joins soon. </p>
+<p > In this section, we'll benchmark `data.table` <code4>joins</code4> against `dplyr`'s. For now, We'll consider only <code4>left join</code4> for now. We will update with the other joins soon. </p>
 <div class='bs-callout bs-callout-info' id='joins-box-01'>
 <h4>To compare performance, we will:</h4>
 <ol>
@@ -716,7 +716,6 @@ Once again, `data.table` turns out faster.
 <li> Generate two different data sets - one with relatively **less** unique groupings (~100-1000) and the other **many** groups (~100,000).</li>
 <li> Also test the performance of joins on **multiple columns**. .li
 </ol>
-<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
 </div>
 <p > The functions required to generate these large datasets (mentioned above) for both `data.table` and `dplyr` cases are shown below. Click on the box below to collapse and reveal the code. </p>
 <div class='panel-group' id='accordion'>
@@ -729,8 +728,8 @@ Once again, `data.table` turns out faster.
 <div class='highlight'>
 ```{.r}
 # setup data
-#require(data.table) # v1.9.4
-#require(dplyr)      # v0.1.2
+#require(data.table) # v1.9.3
+#require(dplyr)      # v0.2
 # For data.table
 getDTx <- function(n, k) {
     set.seed(45L)
@@ -994,15 +993,12 @@ getDFy <- function(DT, by) as.data.frame(getDTy(DT, by))
 <!-- melt -->
 <div class='bs-docs-section'>
 <h1 id="reshape" class="page-header">vs Reshape</h1>
-<p class='lead'> `data.table 1.9` imports the package <code4>reshape2</code4> and implements `data.table` specific methods for  both <code4>melt</code4> and <code4>dcast</code4> in <code>C</code>. It's both fast and memory efficient. We'll compare them here to with `reshape2`'s respective methods. </p>
-<div class='bs-callout bs-callout-info' id='reshape-box-01'>
-<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
-</div>
+<p > `data.table 1.9` imports the package `reshape2` and implements `data.table` specific methods for  both <code4>melt</code4> and <code4>dcast</code4> in <code>C</code>. It's both fast and memory efficient. We'll compare them here to with `reshape2`'s respective methods. </p>
 <h2 id="melt">Melt</h2>
-<p > Let's setup functions to generate data first. </p>
+<p > Here are the functions to generate data. </p>
 ```{.r}
 # setup data
-require(data.table) # 1.9.4
+require(data.table) # 1.9.3
 require(reshape2)
 getDT <- function(n) {
     set.seed(45L)
@@ -1012,7 +1008,7 @@ getDT <- function(n) {
 getDF <- function(n) as.data.frame(getDT(n))
 ```
 </div>
-<p > We'll benchmark on <code4>1e8 rows</code4>. Also, we'll compare <code4>melt</code4> with and without the argument <code4>na.rm</code4>. </p>
+<p > We'll benchmark on 1e8 rows. Also, we'll compare <code4>melt</code4> with and without the argument <code4>na.rm</code4>. </p>
 <div class='bs-callout bs-callout-info' id='reshape-box-02'>
 <h4><span class="glyphicon glyphicon-cog"></span> New optimisations to reshape2's melt:</h4>
 <p > Kevin Ushey has recently added a [C++](https://github.com/hadley/reshape/pull/39) version of <code4>melt</code4> to the `reshape2` package. At the time of writing, it's still not available on CRAN. We'll benchmark both <code4>melt</code4> from CRAN version 1.2.2 and the new `C++` version (commit 148). </p>
@@ -1111,7 +1107,7 @@ getDF <- function(n) as.data.frame(getDT(n))
 <p > The `dcast` function from the `reshape2` package is not a S3 generic yet. Therefore for the moment, we'll have to use the function as <code4>dcast.data.table</code4>. All arguments except for <code>margins</code> is implemented. </p>
 ```{.r}
 # setup data
-require(data.table) # 1.9.4
+require(data.table) # 1.9.3
 require(reshape2)
 getDT <- function(n) {
     set.seed(45L)
@@ -1121,7 +1117,7 @@ getDT <- function(n) {
 getDF <- function(n) as.data.frame(getDT(n))
 ```
 </div>
-<p > Let's benchmark on <code4>1e8 rows</code4>. Columns <code4>aa</code4> and <code4>bb</code4> both have 1e2 and 1e3 unique values each. </p>
+<p > Let's benchmark on 1e8 rows. Columns <code4>aa</code4> and <code4>bb</code4> both have 1e2 and 1e3 unique values each. </p>
 <!-- dcast table -->
 <h4 id="reshape_dcast">Benchmark summary</h4>
 <div class='bs-example table-responsive'>
@@ -1231,11 +1227,8 @@ getDF <- function(n) as.data.frame(getDT(n))
 </div>
 <div class='bs-docs-section'>
 <h1 id="baseR" class="page-header">vs base R</h1>
-<p class='lead'> base R's <code4>unique()</code4> as well as <code4>duplicated()</code4> are a very efficient and extremely fast, when operated on vectors. However their `data.frame` methods aren't as efficient and tends to get very slow on relatively large data sizes. In this section, we'd like to highlight the performance gains of these methods implemented in `data.table`. </p>
-<div class='bs-callout bs-callout-info' id='baseR-box-01'>
-<span class="text-info"><span class="glyphicon glyphicon-info-sign"></span></span> All benchmark timings reported are minimum of three consecutive runs.
-</div>
-<p > Let's create a data set with **1e8 rows** and three columns. We'll compare <code4>unique()</code4> alone on `data.table` and `data.frame` over certain column combinations. Here are the functions to generate the data: </p>
+<p > base R's <code4>unique()</code4> as well as <code4>duplicated()</code4> are a very efficient and extremely fast, when operated on vectors. However their `data.frame` methods aren't as efficient and tends to get very slow on relatively large data sizes. In this section, we'd like to highlight the performance gains of these methods implemented in `data.table`. </p>
+<p > Let's create a data set with 1e8 rows and three columns. We'll compare <code4>unique()</code4> alone on `data.table` and `data.frame` over certain column combinations. Here are the functions to generate the data: </p>
 ```{.r}
 # For data.table
 getDT <- function(n) {
