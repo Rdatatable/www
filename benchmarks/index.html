@@ -98,10 +98,10 @@ Benchmarks
 This page follows up on an <a href="http://arunsrinivasan.github.io/dplyr_benchmark/">earlier note</a> where we proposed we would provide a range of benchmarks on large data comparing <code>data.table</code> to <code>dplyr</code>. Here we test here on <strong>1,000 times larger</strong> data: <strong>half a billion rows</strong> by <strong>six columns</strong> (<code>~13GB</code>). We still consider 13GB fairly small but it should be big enough to make inferences that hold with even larger data; e.g., some users already have much larger <code>data.table</code>s on machines with over 200GB RAM.
 </p>
 <div class='bs-callout bs-callout-info' id='datatable-row-limit'>
-<ol style="list-style-type: decimal">
+<ul>
 <li><code>data.table</code> is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.</li>
 <li>All benchmarks timings reported are minimum of <strong>three consecutive runs</strong>. These are benchmarks are relatively huge data; they necessarily take a long time to run (many minutes for a single run, typically).</li>
-</ol>
+</ul>
 </div>
 <h1 id="data-manipulation" class="page-header">
 Data manipulation

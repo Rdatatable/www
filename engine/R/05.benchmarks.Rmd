@@ -48,8 +48,8 @@
 <h1 id="introduction" class="page-header">Benchmarks</h1>
 <p > This page follows up on an [earlier note](http://arunsrinivasan.github.io/dplyr_benchmark/) where we proposed we would provide a range of benchmarks on large data comparing `data.table` to `dplyr`. Here we test here on **1,000 times larger** data: **half a billion rows** by **six columns** (`~13GB`). We still consider 13GB fairly small but it should be big enough to make inferences that hold with even larger data; e.g., some users already have much larger `data.table`s on machines with over 200GB RAM. </p>
 <div class='bs-callout bs-callout-info' id='datatable-row-limit'>
-1) `data.table` is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
-2) All benchmarks timings reported are minimum of **three consecutive runs**. These are benchmarks are relatively huge data; they necessarily take a long time to run (many minutes for a single run, typically).
+* `data.table` is currently limited to 2 billion rows; i.e., each column is limited to 8GB (integer) or 16GB (numeric). Since this limit applies to each column, you can have 2 billion rows and 10 integer columns in an 80GB data.table, for example.
+* All benchmarks timings reported are minimum of **three consecutive runs**. These are benchmarks are relatively huge data; they necessarily take a long time to run (many minutes for a single run, typically).
 </div>
 <h1 id="data-manipulation" class="page-header">Data manipulation</h1>
 <p > We'll first begin by comparing the most common data manipulation operations between `data.table` and `dplyr`. For grouped operations, `dplyr` provides a function <code4>group_by()</code4> to be combined with dplyr's verbs, to perform operations on each group. We'll compare performance both with and without grouping wherever possible. </p>
