@@ -73,7 +73,7 @@
 <div class='highlight'>
 ```{.r}
 # setup data
-require(data.table) # v1.9.3
+require(data.table) # v1.9.2+
 require(dplyr)      # v0.2
 # For data.table
 getDT <- function(n, k) {
@@ -728,8 +728,8 @@ Once again, `data.table` turns out faster.
 <div class='highlight'>
 ```{.r}
 # setup data
-#require(data.table) # v1.9.3
-#require(dplyr)      # v0.2
+require(data.table) # v1.9.2+
+require(dplyr)      # v0.2
 # For data.table
 getDTx <- function(n, k) {
     set.seed(45L)
@@ -998,7 +998,7 @@ getDFy <- function(DT, by) as.data.frame(getDTy(DT, by))
 <p > Here are the functions to generate data. </p>
 ```{.r}
 # setup data
-require(data.table) # 1.9.3
+require(data.table) # 1.9.2+
 require(reshape2)
 getDT <- function(n) {
     set.seed(45L)
@@ -1107,7 +1107,7 @@ getDF <- function(n) as.data.frame(getDT(n))
 <p > The `dcast` function from the `reshape2` package is not a S3 generic yet. Therefore for the moment, we'll have to use the function as <code4>dcast.data.table</code4>. All arguments except for <code>margins</code> is implemented. </p>
 ```{.r}
 # setup data
-require(data.table) # 1.9.3
+require(data.table) # 1.9.2+
 require(reshape2)
 getDT <- function(n) {
     set.seed(45L)
@@ -1236,7 +1236,7 @@ getDT <- function(n) {
     y=sample(paste("id", 1:100, sep=""), n, TRUE), 
     z=as.numeric(sample(-100:100, n, TRUE)))
 }
-# For dplyr
+# For base
 getDF <- function(n) as.data.frame(getDT(n))
 ```
 </div>

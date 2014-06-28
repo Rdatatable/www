@@ -135,7 +135,7 @@ Test grouping on various types (character, integer and numeric).
 <div class='panel-body'>
 <div class='highlight'>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># setup data</span>
-<span class="kw">require</span>(data.table) <span class="co"># v1.9.3</span>
+<span class="kw">require</span>(data.table) <span class="co"># v1.9.2+</span>
 <span class="kw">require</span>(dplyr)      <span class="co"># v0.2</span>
 <span class="co"># For data.table</span>
 getDT &lt;-<span class="st"> </span>function(n, k) {
@@ -1144,8 +1144,8 @@ The functions required to generate these large datasets (mentioned above) for bo
 <div class='panel-body'>
 <div class='highlight'>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># setup data</span>
-<span class="co">#require(data.table) # v1.9.3</span>
-<span class="co">#require(dplyr)      # v0.2</span>
+<span class="kw">require</span>(data.table) <span class="co"># v1.9.2+</span>
+<span class="kw">require</span>(dplyr)      <span class="co"># v0.2</span>
 <span class="co"># For data.table</span>
 getDTx &lt;-<span class="st"> </span>function(n, k) {
     <span class="kw">set.seed</span>(45L)
@@ -1592,7 +1592,7 @@ Melt
 Here are the functions to generate data.
 </p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># setup data</span>
-<span class="kw">require</span>(data.table) <span class="co"># 1.9.3</span>
+<span class="kw">require</span>(data.table) <span class="co"># 1.9.2+</span>
 <span class="kw">require</span>(reshape2)
 getDT &lt;-<span class="st"> </span>function(n) {
     <span class="kw">set.seed</span>(45L)
@@ -1765,7 +1765,7 @@ Cast
 The <code>dcast</code> function from the <code>reshape2</code> package is not a S3 generic yet. Therefore for the moment, we’ll have to use the function as <code4>dcast.data.table</code4>. All arguments except for <code>margins</code> is implemented.
 </p>
 <pre class="sourceCode r"><code class="sourceCode r"><span class="co"># setup data</span>
-<span class="kw">require</span>(data.table) <span class="co"># 1.9.3</span>
+<span class="kw">require</span>(data.table) <span class="co"># 1.9.2+</span>
 <span class="kw">require</span>(reshape2)
 getDT &lt;-<span class="st"> </span>function(n) {
     <span class="kw">set.seed</span>(45L)
@@ -1970,7 +1970,7 @@ getDT &lt;-<span class="st"> </span>function(n) {
     <span class="dt">y=</span><span class="kw">sample</span>(<span class="kw">paste</span>(<span class="st">&quot;id&quot;</span>, <span class="dv">1</span>:<span class="dv">100</span>, <span class="dt">sep=</span><span class="st">&quot;&quot;</span>), n, <span class="ot">TRUE</span>), 
     <span class="dt">z=</span><span class="kw">as.numeric</span>(<span class="kw">sample</span>(-<span class="dv">100</span>:<span class="dv">100</span>, n, <span class="ot">TRUE</span>)))
 }
-<span class="co"># For dplyr</span>
+<span class="co"># For base</span>
 getDF &lt;-<span class="st"> </span>function(n) <span class="kw">as.data.frame</span>(<span class="kw">getDT</span>(n))</code></pre>
 </div>
 <h2 id="unique">
