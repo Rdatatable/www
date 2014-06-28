@@ -590,7 +590,7 @@ getDF <- function(n, k) {
 </td>
 <td>
 <span class="text-mono">
-<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = id1]</p>
+<p class="lead2">DT[, \`:=\`(v4 = v1/max(v1)), by = id1]</p>
 </span>
 </td>
 <td>**data.table**</td>
@@ -617,7 +617,7 @@ getDF <- function(n, k) {
 </td>
 <td>
 <span class="text-mono">
-<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = id1]</p>
+<p class="lead2">DT[, \`:=\`(v4 = v1/max(v1)), by = id1]</p>
 </span>
 </td>
 <td>**data.table**</td>
@@ -644,7 +644,7 @@ getDF <- function(n, k) {
 </td>
 <td>
 <span class="text-mono">
-<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = "id1,id2"]</p>
+<p class="lead2">DT[, \`:=\`(v4 = v1/max(v1)), by = "id1,id2"]</p>
 </span>
 </td>
 <td>**data.table**</td>
@@ -671,7 +671,7 @@ getDF <- function(n, k) {
 </td>
 <td>
 <span class="text-mono">
-<p class="lead2">DT[, `:=`(v4 = v1/max(v1)), by = "id1,id2,id3"]</p>
+<p class="lead2">DT[, \`:=\`(v4 = v1/max(v1)), by = "id1,id2,id3"]</p>
 </span>
 </td>
 <td>**data.table**</td>
